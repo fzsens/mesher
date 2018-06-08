@@ -37,7 +37,7 @@ public class ProxyBootstrap {
     /**
      * Register a new {@link Channel} with this server, for later closing.
      *
-     * @param channel channel
+     * @param channel nettyChannel
      */
     protected void registerChannel(Channel channel) {
         allChannels.add(channel);

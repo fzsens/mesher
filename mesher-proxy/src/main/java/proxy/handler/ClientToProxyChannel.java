@@ -64,7 +64,7 @@ public class ClientToProxyChannel extends AbstractProxyChannel {
     }
 
     private void initChannelPipeline(ChannelPipeline pipeline) {
-        log.info("init channel pipeline");
+        log.info("init nettyChannel pipeline");
         pipeline.addLast("codec", new HttpServerCodec());
         pipeline.addLast("aggregator", new HttpObjectAggregator(CONTENT_LENGTH_D));
         pipeline.addLast("idle", new IdleStateHandler(0, 0, IDLE_TIMEOUT));

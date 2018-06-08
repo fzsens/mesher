@@ -50,7 +50,7 @@ public class ProxyToServerChannel extends AbstractProxyChannel {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        this.channel = future.channel();
-        this.channel.pipeline().addLast(this);
+        this.nettyChannel = future.channel();
+        this.nettyChannel.pipeline().addLast(this);
     }
 }

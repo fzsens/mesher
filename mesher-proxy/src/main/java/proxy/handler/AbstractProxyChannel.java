@@ -2,15 +2,12 @@ package proxy.handler;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.FutureListener;
-import io.netty.util.concurrent.GenericFutureListener;
 import io.netty.util.concurrent.Promise;
 
 /**
- * abstract proxy channel
+ * abstract proxy nettyChannel
  * Created by fzsens on 2018/5/31.
  */
 public abstract class AbstractProxyChannel extends ChannelDuplexHandler {
@@ -20,9 +17,9 @@ public abstract class AbstractProxyChannel extends ChannelDuplexHandler {
     static final int IDLE_TIMEOUT = 10;
 
     /**
-     * netty channel for read or write
+     * netty nettyChannel for read or write
      */
-    protected volatile Channel channel;
+    protected volatile Channel nettyChannel;
     /**
      * relate handler context
      */
@@ -41,7 +38,7 @@ public abstract class AbstractProxyChannel extends ChannelDuplexHandler {
      * @return channelFuture
      */
     protected ChannelFuture doWrite(final Object msg) {
-        return channel.writeAndFlush(msg);
+        return nettyChannel.writeAndFlush(msg);
     }
 
     @Override
@@ -58,7 +55,7 @@ public abstract class AbstractProxyChannel extends ChannelDuplexHandler {
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         try {
             this.ctx = ctx;
-            this.channel = ctx.channel();
+            this.nettyChannel = ctx.channel();
         } finally {
             super.channelRegistered(ctx);
         }
@@ -87,10 +84,10 @@ public abstract class AbstractProxyChannel extends ChannelDuplexHandler {
      * 断开Channel连接
      */
     Future<Void> disconnect() {
-        if (channel == null) {
+        if (nettyChannel == null) {
             return null;
         } else {
-            final Promise<Void> promise = channel.newPromise();
+            final Promise<Void> promise = nettyChannel.newPromise();
             doWrite(Unpooled.EMPTY_BUFFER).addListener(
                     future -> closeChannel(promise));
             return promise;
@@ -98,7 +95,7 @@ public abstract class AbstractProxyChannel extends ChannelDuplexHandler {
     }
 
     private void closeChannel(final Promise<Void> promise) {
-        channel.close().addListener(
+        nettyChannel.close().addListener(
                 future -> {
                     if (future
                             .isSuccess()) {
@@ -112,7 +109,7 @@ public abstract class AbstractProxyChannel extends ChannelDuplexHandler {
 
 
     public boolean isConnected() {
-        return this.channel != null && this.channel.isActive();
+        return this.nettyChannel != null && this.nettyChannel.isActive();
     }
 
     @Override
