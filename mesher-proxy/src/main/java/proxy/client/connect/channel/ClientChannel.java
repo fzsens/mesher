@@ -1,4 +1,4 @@
-package proxy.connect.channel;
+package proxy.client.connect.channel;
 
 import io.netty.channel.Channel;
 

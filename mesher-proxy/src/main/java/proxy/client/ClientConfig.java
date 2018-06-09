@@ -1,8 +1,9 @@
-package proxy.connect;
+package proxy.client;
 
 import com.google.common.net.HostAndPort;
 import io.netty.util.Timer;
 
+import java.net.SocketAddress;
 import java.util.Map;
 
 /**
@@ -11,14 +12,12 @@ import java.util.Map;
 public class ClientConfig {
 
     private final Map<String, Object> bootstrapOptions;
-    private final HostAndPort defaultSocksProxyAddress;
-    private final Timer timer;
+    private final SocketAddress defaultSocksProxyAddress;
     private final int workerThreadCount;
 
-    public ClientConfig(Map<String, Object> bootstrapOptions, HostAndPort defaultSocksProxyAddress, Timer timer, int workerThreadCount) {
+    public ClientConfig(Map<String, Object> bootstrapOptions, SocketAddress defaultSocksProxyAddress, int workerThreadCount) {
         this.bootstrapOptions = bootstrapOptions;
         this.defaultSocksProxyAddress = defaultSocksProxyAddress;
-        this.timer = timer;
         this.workerThreadCount = workerThreadCount;
     }
 
@@ -26,12 +25,8 @@ public class ClientConfig {
         return bootstrapOptions;
     }
 
-    public HostAndPort getDefaultSocksProxyAddress() {
+    public SocketAddress getDefaultSocksProxyAddress() {
         return defaultSocksProxyAddress;
-    }
-
-    public Timer getTimer() {
-        return timer;
     }
 
     public int getWorkerThreadCount() {

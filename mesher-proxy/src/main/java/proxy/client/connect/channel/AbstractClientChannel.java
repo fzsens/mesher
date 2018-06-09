@@ -1,4 +1,4 @@
-package proxy.connect.channel;
+package proxy.client.connect.channel;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -27,11 +27,9 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
 
     private volatile Exception channelError;
 
-    private final Timer timer;
 
-    protected AbstractClientChannel(Channel nettyChannel, Timer timer) {
+    protected AbstractClientChannel(Channel nettyChannel) {
         this.nettyChannel = nettyChannel;
-        this.timer = timer;
     }
 
     @Override

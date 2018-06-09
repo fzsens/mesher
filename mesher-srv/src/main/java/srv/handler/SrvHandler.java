@@ -28,7 +28,8 @@ public class SrvHandler extends ChannelInboundHandlerAdapter {
 
         byte[] CONTENT = {'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd'};
         ChannelFuture future = ctx.writeAndFlush(Unpooled.copiedBuffer(CONTENT));
-        super.channelRead(ctx, msg);
+        System.out.println(future.get());
+       // super.channelRead(ctx, msg);
     }
 
     @Override

@@ -6,8 +6,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
-import proxy.bootstrap.ClientBootstrap;
-import proxy.bootstrap.DefaultClientBootstrap;
+import proxy.client.bootstrap.ClientBootstrap;
+import proxy.client.bootstrap.DefaultClientBootstrap;
 
 import java.net.SocketAddress;
 

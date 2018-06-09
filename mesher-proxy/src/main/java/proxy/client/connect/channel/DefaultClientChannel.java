@@ -1,4 +1,4 @@
-package proxy.connect.channel;
+package proxy.client.connect.channel;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -10,8 +10,8 @@ import io.netty.util.Timer;
  */
 public class DefaultClientChannel extends AbstractClientChannel {
 
-    public DefaultClientChannel(Channel nettyChannel, Timer timer) {
-        super(nettyChannel, timer);
+    public DefaultClientChannel(Channel nettyChannel) {
+        super(nettyChannel);
     }
 
     @Override

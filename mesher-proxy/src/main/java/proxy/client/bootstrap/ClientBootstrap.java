@@ -1,4 +1,4 @@
-package proxy.bootstrap;
+package proxy.client.bootstrap;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandler;

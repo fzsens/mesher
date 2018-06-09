@@ -1,4 +1,4 @@
-package proxy.bootstrap;
+package proxy.client.bootstrap;
 
 import com.google.common.collect.ImmutableMap;
 import io.netty.bootstrap.Bootstrap;

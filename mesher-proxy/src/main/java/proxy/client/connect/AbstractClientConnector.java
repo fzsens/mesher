@@ -1,8 +1,8 @@
-package proxy.connect;
+package proxy.client.connect;
 
 import io.netty.channel.ChannelFuture;
-import proxy.bootstrap.ClientBootstrap;
-import proxy.connect.channel.ClientChannel;
+import proxy.client.bootstrap.ClientBootstrap;
+import proxy.client.connect.channel.ClientChannel;
 
 import java.net.SocketAddress;
 
