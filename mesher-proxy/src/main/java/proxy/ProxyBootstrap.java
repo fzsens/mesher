@@ -12,21 +12,23 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import proxy.handler.ClientToProxyChannel;
+import proxy.handler.ClientProxyHandler;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 
 /**
  * launch proxy sidecar
- * Created by thierry.fu on 2018/5/30.
+ * Created by fzsens on 2018/5/30.
  */
-public class ProxyBootstrap {
+public class ProxyBootstrap implements Closeable{
 
     private Logger log = LoggerFactory.getLogger(ProxyBootstrap.class);
     /**
      * all channels created
      */
-    private final ChannelGroup allChannels = new DefaultChannelGroup("mesher-server-proxyr", GlobalEventExecutor.INSTANCE);
+    private final ChannelGroup allChannels = new DefaultChannelGroup("mesher-proxy-client", GlobalEventExecutor.INSTANCE);
 
     private final InetSocketAddress bindAddress;
 
@@ -46,7 +48,7 @@ public class ProxyBootstrap {
     void doStart() {
         ChannelInitializer<Channel> initializer = new ChannelInitializer<Channel>() {
             protected void initChannel(Channel ch) throws Exception {
-                new ClientToProxyChannel(
+                new ClientProxyHandler(
                         ch.pipeline());
             }
         };
@@ -72,8 +74,14 @@ public class ProxyBootstrap {
         log.info("Proxy started at address: " + boundAddress);
     }
 
+
     public static void main(String[] args) {
         ProxyBootstrap bootstrap = new ProxyBootstrap(new InetSocketAddress("127.0.0.1",20000));
         bootstrap.doStart();
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.allChannels.close().awaitUninterruptibly();
     }
 }
