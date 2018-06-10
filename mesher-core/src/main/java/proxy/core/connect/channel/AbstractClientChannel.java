@@ -22,10 +22,9 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
 
     private final Channel nettyChannel;
 
-    private final Map<Integer, Request> requestMap = new HashMap<>();
+    private final Map<Long, Request> requestMap = new HashMap<>();
 
     private volatile Exception channelError;
-
 
     protected AbstractClientChannel(Channel nettyChannel) {
         this.nettyChannel = nettyChannel;
@@ -36,11 +35,9 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
         return nettyChannel;
     }
 
-    protected abstract ByteBuf extractResponse(Object message) throws Exception;
+    //  protected abstract Object extractResponse(Object message) throws Exception;
 
-    protected abstract int extractSequenceId(Object messageBuffer) throws Exception;
-
-    protected abstract ChannelFuture writeRequest(Object request);
+    protected abstract long extractSequenceId(Object message) throws Exception;
 
     public void close() {
         getNettyChannel().close();
@@ -66,7 +63,7 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
     @Override
     public void sendAsyncRequest(final Object message,
                                  final Listener listener) throws Exception {
-        final int sequenceId = extractSequenceId(message);
+        final long sequenceId = extractSequenceId(message);
         executeInIoThread(new Runnable() {
             @Override
             public void run() {
@@ -96,13 +93,17 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
         });
     }
 
+    protected ChannelFuture writeRequest(Object request) {
+        return getNettyChannel().write(request);
+    }
+
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
-            ByteBuf response = extractResponse(msg);
-            if (response != null) {
-                int sequenceId = extractSequenceId(response);
-                onResponseReceived(sequenceId, response);
+            // Object response = extractResponse(msg);
+            if (msg != null) {
+                long sequenceId = extractSequenceId(msg);
+                onResponseReceived(sequenceId, msg);
             } else {
                 super.channelRead(ctx, msg);
             }
@@ -118,7 +119,7 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
         }
     }
 
-    private void onResponseReceived(int sequenceId, ByteBuf response) {
+    private void onResponseReceived(long sequenceId, Object response) {
         Request request = requestMap.remove(sequenceId);
         if (request == null) {
             onError(new Exception("Bad sequence id in response: " + sequenceId));
@@ -139,7 +140,7 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
         }
     }
 
-    private Request makeRequest(int sequenceId, Listener listener) {
+    private Request makeRequest(long sequenceId, Listener listener) {
         Request request = new Request(listener);
         requestMap.put(sequenceId, request);
         return request;
@@ -215,7 +216,7 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
         }
     }
 
-    private void fireResponseReceivedCallback(Listener listener, ByteBuf response) {
+    private void fireResponseReceivedCallback(Listener listener, Object response) {
         try {
             listener.onResponseReceived(response);
         } catch (Throwable t) {

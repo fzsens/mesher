@@ -96,4 +96,10 @@ public class Bytes {
                 ((b[off + 1] & 0xFFL) << 48) +
                 (((long) b[off + 0]) << 56);
     }
+
+    public static int bytesToInt(byte[] src, int offset) {
+        int value;
+        value = (int) ((src[offset] & 0xFF) | ((src[offset + 1] & 0xFF) << 8) | ((src[offset + 2] & 0xFF) << 16) | ((src[offset + 3] & 0xFF) << 24));
+        return value;
+    }
 }

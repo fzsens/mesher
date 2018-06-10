@@ -30,50 +30,46 @@ public class ProxyClientToDubboTest {
         ClientConnector<ClientChannel> defaultConnector = new DubboClientConnector(new InetSocketAddress("127.0.0.1", 20880));
         RequestChannel channel = client.connectAsync(defaultConnector).get();
 
+        for(int i = 0; i< 1;i++) {
 
-        RpcInvocation invocation = new RpcInvocation();
-        invocation.setMethodName("hash");
-        invocation.setAttachment("path", "com.alibaba.dubbo.performance.demo.provider.IHelloService");
-        invocation.setParameterTypes("Ljava/lang/String;");    // Dubbo内部用"Ljava/lang/String"来表示参数类型是String
+            RpcInvocation invocation = new RpcInvocation();
+            invocation.setMethodName("hash");
+            invocation.setAttachment("path", "com.alibaba.dubbo.performance.demo.provider.IHelloService");
+            invocation.setParameterTypes("Ljava/lang/String;");    // Dubbo内部用"Ljava/lang/String"来表示参数类型是String
 
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
-        JsonUtils.writeObject("1234", writer);
-        invocation.setArguments(out.toByteArray());
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
+            JsonUtils.writeObject("1234" + i, writer);
+            invocation.setArguments(out.toByteArray());
 
-        Request request = new Request();
-        request.setVersion("2.0.0");
-        request.setTwoWay(true);
-        request.setData(invocation);
+            RpcRequest request = new RpcRequest();
+            request.setVersion("2.0.0");
+            request.setTwoWay(true);
+            request.setData(invocation);
+            final int index = i;
+            channel.sendAsyncRequest(request, new RequestChannel.Listener() {
+                @Override
+                public void onRequestSent() {
+                    System.out.println("sned");
+                }
 
-        channel.sendAsyncRequest(request, new RequestChannel.Listener() {
-            @Override
-            public void onRequestSent() {
-                System.out.println("sned");
-            }
+                @Override
+                public void onResponseReceived(Object resp) {
+                    if (resp instanceof RpcResponse) {
+                        RpcResponse response = (RpcResponse) resp;
+                        String s = new String(response.getBytes());
+                        System.out.println("received resp " + s);
+                        System.out.println("hash code "+("1234" + index).hashCode());
+                    }
+                }
 
-            @Override
-            public void onResponseReceived(ByteBuf byteBuf) {
-                byte[] data = new byte[byteBuf.readableBytes()];
-                byteBuf.readBytes(data);
+                @Override
+                public void onError(Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+        }
 
-                byte[] subArray = Arrays.copyOfRange(data, 16 + 1, data.length);
-
-                String s = new String(subArray);
-
-                byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
-                long requestId = Bytes.bytes2long(requestIdBytes, 0);
-                RpcResponse response = new RpcResponse();
-                response.setRequestId(String.valueOf(requestId));
-                response.setBytes(subArray);
-                System.out.println("reces" + byteBuf);
-            }
-
-            @Override
-            public void onError(Exception ex) {
-                ex.printStackTrace();
-            }
-        });
         System.out.println("1234".hashCode());
         TimeUnit.SECONDS.sleep(5);
 

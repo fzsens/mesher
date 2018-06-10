@@ -1,7 +1,5 @@
 package proxy.core.connect.channel;
 
-import io.netty.buffer.ByteBuf;
-
 /**
  * Created by fzsens on 2018/6/8.
  */
@@ -16,7 +14,7 @@ public interface RequestChannel {
 
         void onRequestSent() ;
 
-        void onResponseReceived(ByteBuf message);
+        void onResponseReceived(Object response);
 
         void onError(Exception ex);
     }

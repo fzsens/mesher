@@ -5,7 +5,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import srv.codec.model.Bytes;
 import srv.codec.model.JsonUtils;
-import srv.codec.model.Request;
+import srv.codec.model.RpcRequest;
 import srv.codec.model.RpcInvocation;
 
 import java.io.ByteArrayOutputStream;
@@ -25,8 +25,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
 
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
-        Request req = (Request)msg;
-
+        RpcRequest req = (RpcRequest)msg;
         // header.
         byte[] header = new byte[HEADER_LENGTH];
         // set magic number.
@@ -50,7 +49,6 @@ public class DubboRpcEncoder extends MessageToByteEncoder{
         int len = bos.size();
         buffer.writeBytes(bos.toByteArray());
         Bytes.int2bytes(len, header, 12);
-
         // write
         buffer.writerIndex(savedWriteIndex);
         buffer.writeBytes(header); // write header.

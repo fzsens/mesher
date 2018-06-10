@@ -3,7 +3,7 @@ package srv.codec.model;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class Request {
+public class RpcRequest {
     private static AtomicLong atomicLong = new AtomicLong();
     private long id;
     private String interfaceName = "com.alibaba.dubbo.performance.demo.provider.IHelloService";
@@ -17,7 +17,7 @@ public class Request {
 
     private Object mData;
 
-    public Request(){
+    public RpcRequest(){
         id = atomicLong.getAndIncrement();
     }
 
