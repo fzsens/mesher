@@ -3,27 +3,26 @@ package proxy.handler;
 import com.alibaba.fastjson.JSON;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import proxy.codec.RequestParser;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
 import proxy.core.connect.channel.RequestChannel;
-import proxy.codec.RequestParser;
 import proxy.loadbalance.ProxyLoadBalance;
 import proxy.registry.ETCDRegistry;
 import proxy.registry.Endpoint;
 import proxy.registry.IRegistry;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Map;
 
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
-import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
+import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -56,7 +55,8 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
             IRegistry registry = new ETCDRegistry();
             Map<Endpoint, Integer> endpointMap = registry.find(paramMap.get("interface"));
-            Endpoint endpoint = proxyLoadBalance.select(endpointMap);
+            proxyLoadBalance.init(endpointMap);
+            Endpoint endpoint = proxyLoadBalance.select();
             ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
             ProxyClient client = new ProxyClient(config);
             try {
@@ -68,7 +68,7 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
                     @Override
                     public void onResponseReceived(Object msg) {
-                        if(msg instanceof ByteBuf) {
+                        if (msg instanceof ByteBuf) {
                             ByteBuf message = (ByteBuf) msg;
                             byte[] CONTENT = new byte[message.readableBytes()];
                             message.readBytes(CONTENT);

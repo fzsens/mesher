@@ -1,24 +1,22 @@
 package proxy.loadbalance;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by thierry.fu on 2018/5/31.
  */
 public class ProxyLoadBalance<T> {
 
-    private final SecureRandom random = new SecureRandom();
+    AtomicInteger cursor = new AtomicInteger(0);
 
-    public T select(List<T> channels) {
-        int position = random.nextInt(channels.size());
-        return channels.get(position);
+    List<T> proxyList = new ArrayList<>();
+
+    public T select() {
+        return proxyList.get(cursor.addAndGet(1) % proxyList.size());
     }
 
-    public T select(Map<T, Integer> channelsMap) {
+    public void init(Map<T, Integer> channelsMap) {
         Set<T> keySet = channelsMap.keySet();
         List<T> channels = new ArrayList<>();
         for (T channel : keySet) {
@@ -27,7 +25,7 @@ public class ProxyLoadBalance<T> {
                 channels.add(channel);
             }
         }
-        // Collections.shuffle(channels);
-        return select(channels);
+        Collections.shuffle(channels);
+        proxyList = channels;
     }
 }

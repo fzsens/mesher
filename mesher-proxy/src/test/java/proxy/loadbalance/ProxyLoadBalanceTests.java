@@ -21,8 +21,9 @@ public class ProxyLoadBalanceTests {
         int aTimes = 0;
         int bTimes = 0;
         int cTimes = 0;
+        loadBalance.init(map);
         for(int i = 0 ; i < 1000000;i++){
-           String s = loadBalance.select(map);
+            String s = loadBalance.select();
             if(s.equals("a")) aTimes++;
             if(s.equals("b")) bTimes++;
             if(s.equals("c")) cTimes++;
