@@ -67,14 +67,18 @@ public class ClientProxyHandler extends AbstractProxyHandler {
                     }
 
                     @Override
-                    public void onResponseReceived(ByteBuf message) {
-                        byte[] CONTENT = new byte[message.readableBytes()];
-                        message.readBytes(CONTENT);
-                        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(CONTENT));
-                        response.headers().set(CONTENT_TYPE, "application/json");
-                        response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
-                        response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-                        ctx.writeAndFlush(response);
+                    public void onResponseReceived(Object msg) {
+                        if(msg instanceof ByteBuf) {
+                            ByteBuf message = (ByteBuf) msg;
+                            byte[] CONTENT = new byte[message.readableBytes()];
+                            message.readBytes(CONTENT);
+                            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(CONTENT));
+                            response.headers().set(CONTENT_TYPE, "application/json");
+                            response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
+                            response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+                            ctx.writeAndFlush(response);
+                        }
+
                     }
 
                     @Override

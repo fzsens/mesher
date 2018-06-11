@@ -79,6 +79,7 @@ public class Bytes {
         b[off + 0] = (byte) (v >>> 56);
     }
 
+
     /**
      * to long.
      *
@@ -97,9 +98,27 @@ public class Bytes {
                 (((long) b[off + 0]) << 56);
     }
 
-    public static int bytesToInt(byte[] src, int offset) {
-        int value;
-        value = (int) ((src[offset] & 0xFF) | ((src[offset + 1] & 0xFF) << 8) | ((src[offset + 2] & 0xFF) << 16) | ((src[offset + 3] & 0xFF) << 24));
-        return value;
+    /**
+     * to int
+     *
+     * @param b
+     * @param off
+     * @return
+     */
+    public static int bytes2int(byte[] b, int off) {
+        return ((b[off + 3] & 0xFF) << 0) +
+                ((b[off + 2] & 0xFF) << 8) +
+                ((b[off + 1] & 0xFF) << 16) +
+                ((b[off + 0]) << 24);
+    }
+
+    /**
+     * to int
+     *
+     * @param b
+     * @return
+     */
+    public static int bytes2int(byte[] b) {
+        return bytes2int(b, 0);
     }
 }

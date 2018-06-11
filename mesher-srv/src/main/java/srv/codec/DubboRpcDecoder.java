@@ -15,40 +15,60 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
 
     @Override
     protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf, List<Object> list) {
-        decode2(byteBuf, list);
+        //decode2(byteBuf, list);
+        try {
+            do {
+                int savedReaderIndex = byteBuf.readerIndex();
+                Object msg = null;
+                try {
+                    msg = decode2(byteBuf);
+                } catch (Exception e) {
+                    throw e;
+                }
+                if (msg == DecodeResult.NEED_MORE_INPUT) {
+                    byteBuf.readerIndex(savedReaderIndex);
+                    break;
+                }
+
+                list.add(msg);
+            } while (byteBuf.isReadable());
+        } finally {
+            if (byteBuf.isReadable()) {
+                byteBuf.discardReadBytes();
+            }
+        }
     }
 
-    private void decode2(ByteBuf byteBuf, List<Object> list) {
-        byte[] data = new byte[byteBuf.readableBytes()];
-        int index = 0;
-//        while (index < data.length) {
-//            byte[] requestIdBytes = Arrays.copyOfRange(data, index + 4, index + 12);
-//            long requestId = Bytes.bytes2long(requestIdBytes, 0);
-//            byte[] dataLenBytes = Arrays.copyOfRange(data, index + 12, index + 16);
-//            int dataLen = Bytes.bytesToInt(dataLenBytes, 0);
-//            byte[] dataBytes = Arrays.copyOfRange(data, index + 16, index + 16 + dataLen);
-//            RpcResponse response = new RpcResponse();
-//            response.setRequestId(requestId);
-//            response.setBytes(dataBytes);
-//            index = index + 16 + dataLen;
-//            list.add(response);
-//        }
-//
+    enum DecodeResult {
+        NEED_MORE_INPUT, SKIP_INPUT
+    }
+    private Object decode2(ByteBuf byteBuf) {
+
+        int savedReaderIndex = byteBuf.readerIndex();
+        int readable = byteBuf.readableBytes();
+
+        if (readable < HEADER_LENGTH) {
+            return DecodeResult.NEED_MORE_INPUT;
+        }
+
+        byte[] header = new byte[HEADER_LENGTH];
+        byteBuf.readBytes(header);
+        int len = Bytes.bytes2int(header, 12);
+        int tt = len + HEADER_LENGTH;
+        if (readable < tt) {
+            return DecodeResult.NEED_MORE_INPUT;
+        }
+        byteBuf.readerIndex(savedReaderIndex);
+        byte[] data = new byte[tt];
         byteBuf.readBytes(data);
-
-        byte[] subArray = Arrays.copyOfRange(data,HEADER_LENGTH + 1, data.length);
-
-        String s = new String(subArray);
-
-        byte[] requestIdBytes = Arrays.copyOfRange(data,4,12);
-        byte[] lenBytes = Arrays.copyOfRange(data,12,16);
-        int len = Bytes.bytesToInt(lenBytes,0);
-        long requestId = Bytes.bytes2long(requestIdBytes,0);
-
+        // HEADER_LENGTH + 1，忽略header & Response value type的读取，直接读取实际Return value
+        // dubbo返回的body中，前后各有一个换行，去掉
+        byte[] dataBytes = Arrays.copyOfRange(data, HEADER_LENGTH + 2, data.length - 1);
+        long requestId = Bytes.bytes2long(dataBytes, 4);
         RpcResponse response = new RpcResponse();
         response.setRequestId(requestId);
-        response.setBytes(subArray);
-        list.add(response);
-
+        response.setBytes(dataBytes);
+        return response;
     }
+
 }
