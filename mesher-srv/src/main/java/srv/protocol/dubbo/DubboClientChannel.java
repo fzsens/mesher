@@ -1,9 +1,9 @@
-package srv.codec;
+package srv.protocol.dubbo;
 
 import io.netty.channel.Channel;
 import proxy.core.connect.channel.AbstractClientChannel;
-import srv.codec.model.RpcRequest;
-import srv.codec.model.RpcResponse;
+import srv.protocol.dubbo.model.RpcRequest;
+import srv.protocol.dubbo.model.RpcResponse;
 
 /**
  * Created by fzsens on 6/11/18.

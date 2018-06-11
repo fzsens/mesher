@@ -52,7 +52,6 @@ public class ClientProxyHandler extends AbstractProxyHandler {
             FullHttpRequest fullHttpRequest = (FullHttpRequest) request;
             Map<String, String> paramMap = RequestParser.parse(fullHttpRequest);
             byte[] bytes = JSON.toJSONString(paramMap).getBytes();
-
             IRegistry registry = new ETCDRegistry();
             Map<Endpoint, Integer> endpointMap = registry.find(paramMap.get("interface"));
             proxyLoadBalance.init(endpointMap);
@@ -65,7 +64,6 @@ public class ClientProxyHandler extends AbstractProxyHandler {
                     public void onRequestSent() {
                         // statistic
                     }
-
                     @Override
                     public void onResponseReceived(Object msg) {
                         if (msg instanceof ByteBuf) {
@@ -78,9 +76,7 @@ public class ClientProxyHandler extends AbstractProxyHandler {
                             response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
                             ctx.writeAndFlush(response);
                         }
-
                     }
-
                     @Override
                     public void onError(Exception ex) {
                         // statistic

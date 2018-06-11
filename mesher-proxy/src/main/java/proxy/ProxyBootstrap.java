@@ -1,10 +1,9 @@
 package proxy;
 
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelInitializer;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.*;
+import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -54,6 +53,10 @@ public class ProxyBootstrap implements Closeable{
         };
         ServerBootstrap serverBootstrap = new ServerBootstrap()
                 .group(new NioEventLoopGroup(), new NioEventLoopGroup())
+                .option(ChannelOption.SO_KEEPALIVE, true)
+                .option(ChannelOption.TCP_NODELAY, true)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5)
+                .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(initializer);
         ChannelFuture future = serverBootstrap.bind(bindAddress)

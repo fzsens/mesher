@@ -1,4 +1,4 @@
-package srv.codec.model;
+package srv.protocol.dubbo.model;
 
 import com.alibaba.fastjson.serializer.JSONSerializer;
 import com.alibaba.fastjson.serializer.SerializeWriter;
@@ -28,4 +28,5 @@ public class JsonUtils {
         writer.print(new String(b));
         writer.flush();
     }
+
 }

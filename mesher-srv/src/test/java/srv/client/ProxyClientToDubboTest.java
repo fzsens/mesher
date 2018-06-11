@@ -1,20 +1,21 @@
 package srv.client;
 
-import io.netty.buffer.ByteBuf;
 import org.junit.Test;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
 import proxy.core.connect.ClientConnector;
 import proxy.core.connect.channel.ClientChannel;
 import proxy.core.connect.channel.RequestChannel;
-import srv.codec.DubboClientConnector;
-import srv.codec.model.*;
+import srv.protocol.dubbo.DubboClientConnector;
+import srv.protocol.dubbo.model.JsonUtils;
+import srv.protocol.dubbo.model.RpcInvocation;
+import srv.protocol.dubbo.model.RpcRequest;
+import srv.protocol.dubbo.model.RpcResponse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +31,8 @@ public class ProxyClientToDubboTest {
         ClientConnector<ClientChannel> defaultConnector = new DubboClientConnector(new InetSocketAddress("127.0.0.1", 20880));
         RequestChannel channel = client.connectAsync(defaultConnector).get();
 
-        for(int i = 0; i< 1;i++) {
+        long start = System.currentTimeMillis();
+        for(int i = 0; i< 2000000;i++) {
 
             RpcInvocation invocation = new RpcInvocation();
             invocation.setMethodName("hash");
@@ -59,7 +61,7 @@ public class ProxyClientToDubboTest {
                         RpcResponse response = (RpcResponse) resp;
                         String s = new String(response.getBytes());
                         System.out.println("received resp " + s);
-                        System.out.println("hash code "+("1234" + index).hashCode());
+//                        System.out.println("hash code "+("1234" + index).hashCode());
                     }
                 }
 
@@ -69,8 +71,7 @@ public class ProxyClientToDubboTest {
                 }
             });
         }
-
-        System.out.println("1234".hashCode());
+        System.out.println(System.currentTimeMillis() - start);
         TimeUnit.SECONDS.sleep(5);
 
     }

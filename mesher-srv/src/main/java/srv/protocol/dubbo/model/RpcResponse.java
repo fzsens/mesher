@@ -1,4 +1,4 @@
-package srv.codec.model;
+package srv.protocol.dubbo.model;
 
 public class RpcResponse {
 
