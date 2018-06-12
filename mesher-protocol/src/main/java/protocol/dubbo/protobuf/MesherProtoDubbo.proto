@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package protocol.dubbo.protobuf;
+
+option optimize_for = SPEED;
+option java_package = "protocol.dubbo.protobuf";
+option java_outer_classname="MesherProtoDubbo";
+
+message Response {
+    int64 requestId =1;
+    bytes data =2;
+}
+
+message Request {
+    int64 requestId = 1;
+    string interfaceName = 2;
+    string method = 3;
+    string parameterTypesString = 4;
+    string parameter = 5;
+}

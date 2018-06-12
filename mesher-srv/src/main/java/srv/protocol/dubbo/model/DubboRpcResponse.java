@@ -1,6 +1,6 @@
 package srv.protocol.dubbo.model;
 
-public class RpcResponse {
+public class DubboRpcResponse {
 
     private long requestId;
     private byte[] bytes;

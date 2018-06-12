@@ -1,7 +1,5 @@
 package proxy.handler;
 
-import com.alibaba.fastjson.JSON;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,6 +8,8 @@ import io.netty.handler.codec.http.*;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import protocol.dubbo.protobuf.MesherProtoDubbo;
+import proxy.client.ProtobufClientConnector;
 import proxy.codec.RequestParser;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
@@ -21,6 +21,7 @@ import proxy.registry.IRegistry;
 
 import java.net.InetSocketAddress;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
@@ -34,6 +35,8 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 public class ClientProxyHandler extends AbstractProxyHandler {
 
     private Logger log = LoggerFactory.getLogger(ClientProxyHandler.class);
+
+    private static AtomicLong SEQ_REQ_ID = new AtomicLong(0);
 
     private ProxyLoadBalance<Endpoint> proxyLoadBalance = new ProxyLoadBalance<>();
 
@@ -51,41 +54,50 @@ public class ClientProxyHandler extends AbstractProxyHandler {
         if (request instanceof FullHttpRequest) {
             FullHttpRequest fullHttpRequest = (FullHttpRequest) request;
             Map<String, String> paramMap = RequestParser.parse(fullHttpRequest);
-            byte[] bytes = JSON.toJSONString(paramMap).getBytes();
-            IRegistry registry = new ETCDRegistry();
-            Map<Endpoint, Integer> endpointMap = registry.find(paramMap.get("interface"));
-            proxyLoadBalance.init(endpointMap);
-            Endpoint endpoint = proxyLoadBalance.select();
-            ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
-            ProxyClient client = new ProxyClient(config);
-            try {
-                client.connectAsync().get().sendAsyncRequest(Unpooled.copiedBuffer(bytes), new RequestChannel.Listener() {
-                    @Override
-                    public void onRequestSent() {
-                        // statistic
-                    }
-                    @Override
-                    public void onResponseReceived(Object msg) {
-                        if (msg instanceof ByteBuf) {
-                            ByteBuf message = (ByteBuf) msg;
-                            byte[] CONTENT = new byte[message.readableBytes()];
-                            message.readBytes(CONTENT);
-                            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(CONTENT));
-                            response.headers().set(CONTENT_TYPE, "application/json");
-                            response.headers().set(CONTENT_LENGTH, response.content().readableBytes());
-                            response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-                            ctx.writeAndFlush(response);
-                        }
-                    }
-                    @Override
-                    public void onError(Exception ex) {
-                        // statistic
+            MesherProtoDubbo.Request protoDubboReq =
+                    MesherProtoDubbo.Request.newBuilder().setRequestId(SEQ_REQ_ID.addAndGet(1))
+                    .setInterfaceName(paramMap.get("interface"))
+                    .setMethod(paramMap.get("method"))
+                    .setParameterTypesString(paramMap.get("parameterTypesString"))
+                    .setParameter(paramMap.get("parameter")).build();
+            asyncCall(protoDubboReq);
+        } else {
+            log.debug("//.. heartbeat or else. ");
+        }
+    }
 
+    private void asyncCall(MesherProtoDubbo.Request protoDubboReq) {
+        IRegistry registry = new ETCDRegistry();
+        Map<Endpoint, Integer> endpointMap = registry.find(protoDubboReq.getInterfaceName());
+        proxyLoadBalance.init(endpointMap);
+        Endpoint endpoint = proxyLoadBalance.select();
+        ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
+        ProxyClient client = new ProxyClient(config);
+        try {
+            client.connectAsync(new ProtobufClientConnector(config.getDefaultSocksProxyAddress())).get().sendAsyncRequest(protoDubboReq, new RequestChannel.Listener() {
+                @Override
+                public void onRequestSent() {
+                    // statistic
+                }
+                @Override
+                public void onResponseReceived(Object msg) {
+                    if (msg instanceof MesherProtoDubbo.Response) {
+                        MesherProtoDubbo.Response response = (MesherProtoDubbo.Response) msg;
+                        byte[] CONTENT =  response.getData().toByteArray();
+                        FullHttpResponse httpResponse = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(CONTENT));
+                        httpResponse.headers().set(CONTENT_TYPE, "application/json");
+                        httpResponse.headers().set(CONTENT_LENGTH, httpResponse.content().readableBytes());
+                        httpResponse.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+                        ctx.writeAndFlush(httpResponse);
                     }
-                });
-            } catch (Exception e) {
-                log.warn("send request failed! cause {}", e);
-            }
+                }
+                @Override
+                public void onError(Exception ex) {
+                    // statistic
+                }
+            });
+        } catch (Exception e) {
+            log.warn("send request failed! cause {}", e);
         }
     }
 

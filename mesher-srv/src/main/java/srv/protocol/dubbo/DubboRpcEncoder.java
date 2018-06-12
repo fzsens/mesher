@@ -6,8 +6,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
 import srv.protocol.dubbo.model.JsonUtils;
-import srv.protocol.dubbo.model.RpcRequest;
-import srv.protocol.dubbo.model.RpcInvocation;
+import srv.protocol.dubbo.model.DubboRpcRequest;
+import srv.protocol.dubbo.model.DubboRpcInvocation;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
@@ -36,7 +36,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
      */
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
-        RpcRequest req = (RpcRequest) msg;
+        DubboRpcRequest req = (DubboRpcRequest) msg;
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         encodeRequestData(bos, req.getData());
@@ -54,7 +54,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
         ((CompositeByteBuf) buffer).writerIndex(headerBuf.readableBytes() + bodyBuf.readableBytes());
     }
 
-    private byte getFlag(RpcRequest req) {
+    private byte getFlag(DubboRpcRequest req) {
         byte flag = FLAG_REQUEST | 6;
         if (req.isTwoWay()) flag |= FLAG_TWOWAY;
         if (req.isEvent()) flag |= FLAG_EVENT;
@@ -68,7 +68,7 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
     }
 
     public void encodeRequestData(OutputStream out, Object data) throws Exception {
-        RpcInvocation inv = (RpcInvocation) data;
+        DubboRpcInvocation inv = (DubboRpcInvocation) data;
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
         JsonUtils.writeObject(inv.getAttachment("dubbo", "2.0.1"), writer);
         JsonUtils.writeObject(inv.getAttachment("path"), writer);

@@ -4,7 +4,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import srv.protocol.dubbo.model.Bytes;
-import srv.protocol.dubbo.model.RpcResponse;
+import srv.protocol.dubbo.model.DubboRpcResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -23,17 +23,12 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         try {
             do {
                 int savedReaderIndex = byteBuf.readerIndex();
-                Object msg = null;
-                try {
-                    msg = decode2(byteBuf);
-                } catch (Exception e) {
-                    throw e;
-                }
+                Object msg;
+                msg = decode2(byteBuf);
                 if (msg == NEED_MORE_INPUT) {
                     byteBuf.readerIndex(savedReaderIndex);
                     break;
                 }
-
                 list.add(msg);
             } while (byteBuf.isReadable());
         } finally {
@@ -63,7 +58,7 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         // dubbo返回的body中，前后各有一个换行，去掉
         long requestId = Bytes.bytes2long(data, 4);
         byte[] dataBytes = Arrays.copyOfRange(data, HEADER_LENGTH + 2, data.length - 1);
-        RpcResponse response = new RpcResponse();
+        DubboRpcResponse response = new DubboRpcResponse();
         response.setRequestId(requestId);
         response.setBytes(dataBytes);
         return response;

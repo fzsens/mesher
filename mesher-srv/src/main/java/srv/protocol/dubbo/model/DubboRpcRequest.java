@@ -3,7 +3,7 @@ package srv.protocol.dubbo.model;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class RpcRequest {
+public class DubboRpcRequest {
     private static AtomicLong atomicLong = new AtomicLong();
     private long id;
     private String interfaceName = "com.alibaba.dubbo.performance.demo.provider.IHelloService";
@@ -14,10 +14,9 @@ public class RpcRequest {
     private Object[] args;
     private boolean twoWay = true;
     private boolean event = false;
-
     private Object mData;
 
-    public RpcRequest(){
+    public DubboRpcRequest(){
         id = atomicLong.getAndIncrement();
     }
 

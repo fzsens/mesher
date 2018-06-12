@@ -28,6 +28,12 @@
             <artifactId>mesher-core</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.alimid.qqsrx</groupId>
+            <artifactId>mesher-protocol</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

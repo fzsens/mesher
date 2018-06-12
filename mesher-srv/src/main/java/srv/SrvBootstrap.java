@@ -3,14 +3,18 @@ package srv;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufDecoder;
+import io.netty.handler.codec.protobuf.ProtobufEncoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import protocol.dubbo.protobuf.MesherProtoDubbo;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
 import proxy.core.connect.ClientConnector;
@@ -66,7 +70,12 @@ public class SrvBootstrap {
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
-                        ch.pipeline().addLast(handler);
+                        ChannelPipeline pipeline = ch.pipeline();
+                        pipeline.addLast(new ProtobufVarint32FrameDecoder());
+                        pipeline.addLast(new ProtobufDecoder(MesherProtoDubbo.Request.getDefaultInstance()));
+                        pipeline.addLast(new ProtobufVarint32LengthFieldPrepender());
+                        pipeline.addLast(new ProtobufEncoder());
+                        pipeline.addLast(handler);
                     }
                 });
         ChannelFuture future = serverBootstrap.bind(bindAddress)

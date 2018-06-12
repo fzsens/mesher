@@ -8,9 +8,9 @@ import proxy.core.connect.channel.ClientChannel;
 import proxy.core.connect.channel.RequestChannel;
 import srv.protocol.dubbo.DubboClientConnector;
 import srv.protocol.dubbo.model.JsonUtils;
-import srv.protocol.dubbo.model.RpcInvocation;
-import srv.protocol.dubbo.model.RpcRequest;
-import srv.protocol.dubbo.model.RpcResponse;
+import srv.protocol.dubbo.model.DubboRpcInvocation;
+import srv.protocol.dubbo.model.DubboRpcRequest;
+import srv.protocol.dubbo.model.DubboRpcResponse;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
@@ -34,7 +34,7 @@ public class ProxyClientToDubboTest {
         long start = System.currentTimeMillis();
         for(int i = 0; i< 2000000;i++) {
 
-            RpcInvocation invocation = new RpcInvocation();
+            DubboRpcInvocation invocation = new DubboRpcInvocation();
             invocation.setMethodName("hash");
             invocation.setAttachment("path", "com.alibaba.dubbo.performance.demo.provider.IHelloService");
             invocation.setParameterTypes("Ljava/lang/String;");    // Dubbo内部用"Ljava/lang/String"来表示参数类型是String
@@ -44,24 +44,22 @@ public class ProxyClientToDubboTest {
             JsonUtils.writeObject("1234" + i, writer);
             invocation.setArguments(out.toByteArray());
 
-            RpcRequest request = new RpcRequest();
+            DubboRpcRequest request = new DubboRpcRequest();
             request.setVersion("2.0.0");
             request.setTwoWay(true);
             request.setData(invocation);
-            final int index = i;
             channel.sendAsyncRequest(request, new RequestChannel.Listener() {
                 @Override
                 public void onRequestSent() {
-                    System.out.println("sned");
+                    System.out.println("sent");
                 }
 
                 @Override
                 public void onResponseReceived(Object resp) {
-                    if (resp instanceof RpcResponse) {
-                        RpcResponse response = (RpcResponse) resp;
+                    if (resp instanceof DubboRpcResponse) {
+                        DubboRpcResponse response = (DubboRpcResponse) resp;
                         String s = new String(response.getBytes());
                         System.out.println("received resp " + s);
-//                        System.out.println("hash code "+("1234" + index).hashCode());
                     }
                 }
 

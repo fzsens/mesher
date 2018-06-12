@@ -2,8 +2,8 @@ package srv.protocol.dubbo;
 
 import io.netty.channel.Channel;
 import proxy.core.connect.channel.AbstractClientChannel;
-import srv.protocol.dubbo.model.RpcRequest;
-import srv.protocol.dubbo.model.RpcResponse;
+import srv.protocol.dubbo.model.DubboRpcRequest;
+import srv.protocol.dubbo.model.DubboRpcResponse;
 
 /**
  * Created by fzsens on 6/11/18.
@@ -16,10 +16,10 @@ public class DubboClientChannel extends AbstractClientChannel {
 
     @Override
     protected long extractSequenceId(Object message) throws Exception {
-        if(message instanceof RpcRequest) {
-            return ((RpcRequest)message).getId();
-        } else if(message instanceof RpcResponse) {
-            return ((RpcResponse)message).getRequestId();
+        if(message instanceof DubboRpcRequest) {
+            return ((DubboRpcRequest)message).getId();
+        } else if(message instanceof DubboRpcResponse) {
+            return ((DubboRpcResponse)message).getRequestId();
         }
         return 0;
     }

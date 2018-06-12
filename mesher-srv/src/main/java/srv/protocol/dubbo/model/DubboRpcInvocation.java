@@ -26,7 +26,7 @@ import java.util.Map;
  *
  * @serial Don't change the class name and properties.
  */
-public class RpcInvocation implements Serializable {
+public class DubboRpcInvocation implements Serializable {
 
     private static final long serialVersionUID = -4355285085441097045L;
 
@@ -38,7 +38,7 @@ public class RpcInvocation implements Serializable {
 
     private Map<String, String> attachments;
 
-    public RpcInvocation() {
+    public DubboRpcInvocation() {
     }
 
     public String getMethodName() {
