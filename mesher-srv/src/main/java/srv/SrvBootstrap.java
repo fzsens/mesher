@@ -54,7 +54,7 @@ public class SrvBootstrap {
 
     void doStart() throws ExecutionException, InterruptedException {
 
-        ClientConfig config = new ClientConfig(new HashMap<>(), new InetSocketAddress("127.0.0.1", 20880), 2);
+        ClientConfig config = new ClientConfig(new InetSocketAddress("127.0.0.1", 20880));
         ProxyClient client = new ProxyClient(config);
         ClientConnector<ClientChannel> defaultConnector = new DubboClientConnector(new InetSocketAddress("127.0.0.1", 20880));
         RequestChannel channel = client.connectAsync(defaultConnector).get();

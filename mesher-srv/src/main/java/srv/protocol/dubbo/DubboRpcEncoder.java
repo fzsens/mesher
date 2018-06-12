@@ -28,20 +28,16 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
     protected static final byte FLAG_EVENT = (byte) 0x20;
 
     /**
-     * 优化点：zero-copy
-     * @param ctx
-     * @param msg
-     * @param buffer
      * @throws Exception
      */
     @Override
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
         DubboRpcRequest req = (DubboRpcRequest) msg;
-
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        encodeRequestData(bos, req.getData());
+        if(!req.isHeartbeat()) {
+            encodeRequestData(bos, req.getData());
+        }
         ByteBuf bodyBuf = Unpooled.wrappedBuffer(bos.toByteArray());
-
         ByteBuf headerBuf = ctx.alloc().ioBuffer(HEADER_LENGTH);
         headerBuf.writeShort(MAGIC);
         headerBuf.writeByte(getFlag(req));
@@ -58,7 +54,6 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
         byte flag = FLAG_REQUEST | 6;
         if (req.isTwoWay()) flag |= FLAG_TWOWAY;
         if (req.isEvent()) flag |= FLAG_EVENT;
-
         return flag;
     }
 

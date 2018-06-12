@@ -16,6 +16,8 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
 
     protected static final int HEADER_LENGTH = 16;
 
+    protected static final byte FLAG_EVENT = (byte) 0x20;
+
     static Object NEED_MORE_INPUT = new Object();
 
     @Override
@@ -39,6 +41,8 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
     }
 
     private Object decode2(ByteBuf byteBuf) {
+        DubboRpcResponse response = new DubboRpcResponse();
+
         int savedReaderIndex = byteBuf.readerIndex();
         int readable = byteBuf.readableBytes();
         if (readable < HEADER_LENGTH) {
@@ -51,6 +55,10 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         if (readable < tt) {
             return NEED_MORE_INPUT;
         }
+        byte flag = header[2];
+        if ((flag & FLAG_EVENT) != 0) {
+            response.setHeartbeat(true);
+        }
         byteBuf.readerIndex(savedReaderIndex);
         byte[] data = new byte[tt];
         byteBuf.readBytes(data);
@@ -58,7 +66,6 @@ public class DubboRpcDecoder extends ByteToMessageDecoder {
         // dubbo返回的body中，前后各有一个换行，去掉
         long requestId = Bytes.bytes2long(data, 4);
         byte[] dataBytes = Arrays.copyOfRange(data, HEADER_LENGTH + 2, data.length - 1);
-        DubboRpcResponse response = new DubboRpcResponse();
         response.setRequestId(requestId);
         response.setBytes(dataBytes);
         return response;

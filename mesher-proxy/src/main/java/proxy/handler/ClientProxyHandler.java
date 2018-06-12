@@ -40,6 +40,8 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
     private ProxyLoadBalance<Endpoint> proxyLoadBalance = new ProxyLoadBalance<>();
 
+    private RequestChannel clientChannel;
+
     public ClientProxyHandler(ChannelPipeline pipeline) {
         initChannelPipeline(pipeline);
     }
@@ -50,40 +52,39 @@ public class ClientProxyHandler extends AbstractProxyHandler {
     }
 
     @Override
-    void doRead(Object request) {
-        if (request instanceof FullHttpRequest) {
-            FullHttpRequest fullHttpRequest = (FullHttpRequest) request;
-            Map<String, String> paramMap = RequestParser.parse(fullHttpRequest);
-            MesherProtoDubbo.Request protoDubboReq =
-                    MesherProtoDubbo.Request.newBuilder().setRequestId(SEQ_REQ_ID.addAndGet(1))
-                    .setInterfaceName(paramMap.get("interface"))
-                    .setMethod(paramMap.get("method"))
-                    .setParameterTypesString(paramMap.get("parameterTypesString"))
-                    .setParameter(paramMap.get("parameter")).build();
-            asyncCall(protoDubboReq);
-        } else {
-            log.debug("//.. heartbeat or else. ");
-        }
+    void doRead(FullHttpRequest request) {
+        Map<String, String> paramMap = RequestParser.parse(request);
+        MesherProtoDubbo.Request protoDubboReq =
+                MesherProtoDubbo.Request.newBuilder().setRequestId(SEQ_REQ_ID.addAndGet(1))
+                        .setInterfaceName(paramMap.get("interface"))
+                        .setMethod(paramMap.get("method"))
+                        .setParameterTypesString(paramMap.get("parameterTypesString"))
+                        .setParameter(paramMap.get("parameter")).build();
+        asyncCall(protoDubboReq);
     }
 
     private void asyncCall(MesherProtoDubbo.Request protoDubboReq) {
-        IRegistry registry = new ETCDRegistry();
-        Map<Endpoint, Integer> endpointMap = registry.find(protoDubboReq.getInterfaceName());
-        proxyLoadBalance.init(endpointMap);
-        Endpoint endpoint = proxyLoadBalance.select();
-        ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
-        ProxyClient client = new ProxyClient(config);
         try {
-            client.connectAsync(new ProtobufClientConnector(config.getDefaultSocksProxyAddress())).get().sendAsyncRequest(protoDubboReq, new RequestChannel.Listener() {
+            if (clientChannel == null) {
+                IRegistry registry = new ETCDRegistry();
+                Map<Endpoint, Integer> endpointMap = registry.find(protoDubboReq.getInterfaceName());
+                proxyLoadBalance.init(endpointMap);
+                Endpoint endpoint = proxyLoadBalance.select();
+                ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
+                ProxyClient client = new ProxyClient(config);
+                clientChannel = client.connectAsync(new ProtobufClientConnector(config.getDefaultSocksProxyAddress())).get();
+            }
+            clientChannel.sendAsyncRequest(protoDubboReq, new RequestChannel.Listener() {
                 @Override
                 public void onRequestSent() {
                     // statistic
                 }
+
                 @Override
                 public void onResponseReceived(Object msg) {
                     if (msg instanceof MesherProtoDubbo.Response) {
                         MesherProtoDubbo.Response response = (MesherProtoDubbo.Response) msg;
-                        byte[] CONTENT =  response.getData().toByteArray();
+                        byte[] CONTENT = response.getData().toByteArray();
                         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(CONTENT));
                         httpResponse.headers().set(CONTENT_TYPE, "application/json");
                         httpResponse.headers().set(CONTENT_LENGTH, httpResponse.content().readableBytes());
@@ -91,6 +92,7 @@ public class ClientProxyHandler extends AbstractProxyHandler {
                         ctx.writeAndFlush(httpResponse);
                     }
                 }
+
                 @Override
                 public void onError(Exception ex) {
                     // statistic

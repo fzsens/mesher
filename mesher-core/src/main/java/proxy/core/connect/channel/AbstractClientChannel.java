@@ -75,7 +75,7 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
                         return;
                     }
                     if (hasError()) {
-                        fireChannelErrorCallback(listener, new Exception("has some error before."));
+                        fireChannelErrorCallback(listener, getError());
                         return;
                     }
                     ChannelFuture sendFuture = writeRequest(message);
@@ -133,7 +133,7 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
             if (future.isSuccess()) {
                 fireRequestSentCallback(request.getListener());
             } else {
-                onError(new Exception("send Failed!"));
+                onError(new Exception("send Failed!",future.cause()));
             }
         } catch (Exception ex) {
             onError(ex);

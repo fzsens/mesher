@@ -4,6 +4,9 @@ package srv.protocol.dubbo.model;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class DubboRpcRequest {
+
+    public static final String HEARTBEAT_EVENT = null;
+
     private static AtomicLong atomicLong = new AtomicLong();
     private long id;
     private String interfaceName = "com.alibaba.dubbo.performance.demo.provider.IHelloService";
@@ -13,10 +16,11 @@ public class DubboRpcRequest {
     private String parameterTypesString = "Ljava/lang/String;";
     private Object[] args;
     private boolean twoWay = true;
-    private boolean event = false;
+    private boolean mEvent = false;
     private Object mData;
 
-    public DubboRpcRequest(){
+
+    public DubboRpcRequest() {
         id = atomicLong.getAndIncrement();
     }
 
@@ -77,11 +81,21 @@ public class DubboRpcRequest {
     }
 
     public boolean isEvent() {
-        return event;
+        return mEvent;
     }
 
-    public void setEvent(boolean event) {
-        this.event = event;
+    public boolean isHeartbeat() {
+        return mEvent && HEARTBEAT_EVENT == mData;
+    }
+    public void setHeartbeat(boolean isHeartbeat) {
+        if (isHeartbeat) {
+            setEvent(HEARTBEAT_EVENT);
+        }
+    }
+
+    public void setEvent(String event) {
+        mEvent = true;
+        mData = event;
     }
 
     public String getMethodName() {

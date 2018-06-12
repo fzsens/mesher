@@ -2,6 +2,7 @@ package proxy.handler;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
+import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
@@ -10,7 +11,7 @@ import io.netty.util.concurrent.Promise;
  * abstract proxy nettyChannel
  * Created by fzsens on 2018/5/31.
  */
-public abstract class AbstractProxyHandler extends ChannelDuplexHandler {
+public abstract class AbstractProxyHandler extends SimpleChannelInboundHandler<FullHttpRequest> {
 
     static final int CONTENT_LENGTH_D = 1048576;
 
@@ -30,7 +31,7 @@ public abstract class AbstractProxyHandler extends ChannelDuplexHandler {
      *
      * @param object if this is {@link ClientProxyHandler} object is request from client otherwise
      */
-    abstract void doRead(Object object);
+    abstract void doRead(FullHttpRequest object);
 
     /**
      * @param msg msg
@@ -41,7 +42,7 @@ public abstract class AbstractProxyHandler extends ChannelDuplexHandler {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx, FullHttpRequest msg) throws Exception {
         doRead(msg);
     }
 

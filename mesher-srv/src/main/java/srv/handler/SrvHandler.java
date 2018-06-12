@@ -5,6 +5,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import protocol.dubbo.protobuf.MesherProtoDubbo;
@@ -22,7 +23,7 @@ import java.io.PrintWriter;
  * Created by fzsens on 6/3/18.
  */
 @ChannelHandler.Sharable
-public class SrvHandler extends ChannelInboundHandlerAdapter {
+public class SrvHandler extends SimpleChannelInboundHandler<MesherProtoDubbo.Request> {
 
     private RequestChannel channel;
 
@@ -33,10 +34,8 @@ public class SrvHandler extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead0(ChannelHandlerContext ctx, MesherProtoDubbo.Request request) throws Exception {
 
-        if (msg instanceof MesherProtoDubbo.Request) {
-            MesherProtoDubbo.Request request = (MesherProtoDubbo.Request) msg;
             DubboRpcInvocation invocation = new DubboRpcInvocation();
             invocation.setMethodName(request.getMethod());
             invocation.setAttachment("path", request.getInterfaceName());
@@ -64,6 +63,8 @@ public class SrvHandler extends ChannelInboundHandlerAdapter {
                                         .setData(ByteString.copyFrom(dubboResponse.getBytes()))
                                         .build();
                         ctx.writeAndFlush(protoDubboResp);
+                    } else {
+                        System.out.println("message" + message);
                     }
                 }
                 @Override
@@ -71,7 +72,6 @@ public class SrvHandler extends ChannelInboundHandlerAdapter {
                     ex.printStackTrace();
                 }
             });
-        }
     }
 
     @Override
