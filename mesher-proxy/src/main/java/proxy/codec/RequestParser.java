@@ -1,4 +1,5 @@
 package proxy.codec;
+
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
@@ -18,6 +19,7 @@ public class RequestParser {
 
     /**
      * 解析请求参数
+     *
      * @return 包含所有请求参数的键值对, 如果没有参数, 则返回空Map
      */
     public static Map<String, String> parse(FullHttpRequest fullReq) {
@@ -25,18 +27,22 @@ public class RequestParser {
         Map<String, String> paramMap = new HashMap<>();
         if (HttpMethod.GET == method) {
             QueryStringDecoder decoder = new QueryStringDecoder(fullReq.getUri());
-            decoder.parameters().entrySet().forEach( entry -> paramMap.put(entry.getKey(), entry.getValue().get(0)));
+            decoder.parameters().entrySet().forEach(entry -> paramMap.put(entry.getKey(), entry.getValue().get(0)));
         } else if (HttpMethod.POST == method) {
             HttpPostRequestDecoder decoder = new HttpPostRequestDecoder(fullReq);
-            decoder.offer(fullReq);
-            List<InterfaceHttpData> paramList = decoder.getBodyHttpDatas();
-            for (InterfaceHttpData param : paramList) {
-                Attribute data = (Attribute) param;
-                try {
+            try {
+                decoder.offer(fullReq);
+                List<InterfaceHttpData> paramList = decoder.getBodyHttpDatas();
+                for (InterfaceHttpData param : paramList) {
+                    Attribute data = (Attribute) param;
+
                     paramMap.put(data.getName(), data.getValue());
-                } catch (IOException e) {
-                    e.printStackTrace();
+
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                decoder.destroy();
             }
         }
         return paramMap;
