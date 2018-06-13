@@ -26,7 +26,7 @@ public class ProtobufClientConnector  extends AbstractClientConnector<ClientChan
 
     @Override
     public ClientChannel newClientChannel(Channel nettyChannel, ClientConfig clientConfig) {
-        DefaultClientChannel channel = new DefaultClientChannel(nettyChannel);
+        ProtobufClientChannel channel = new ProtobufClientChannel(nettyChannel);
         channel.getNettyChannel().pipeline().addLast("default", channel);
         return channel;
     }

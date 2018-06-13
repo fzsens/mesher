@@ -15,6 +15,7 @@ public class ProxyLoadBalance {
     List<Endpoint> proxyList = new ArrayList<>();
 
     public Endpoint select() {
+        if(proxyList == null || proxyList.size() == 0) return null;
         return proxyList.get(cursor.addAndGet(1) % proxyList.size());
     }
 

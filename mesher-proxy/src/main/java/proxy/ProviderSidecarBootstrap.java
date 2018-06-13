@@ -104,7 +104,7 @@ public class ProviderSidecarBootstrap {
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress("127.0.0.1", 21001));
+        ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress("127.0.0.1", 22001));
         bootstrap.doStart();
     }
 }

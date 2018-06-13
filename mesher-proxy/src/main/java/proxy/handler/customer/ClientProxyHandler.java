@@ -65,9 +65,13 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
     private void asyncCall(MesherProtoDubbo.Request protoDubboReq) {
         try {
-            List<Endpoint> endpointList = registry.find(protoDubboReq.getInterfaceName());
-            proxyLoadBalance.init(endpointList);
+
             Endpoint endpoint = proxyLoadBalance.select();
+            if(endpoint == null) {
+                List<Endpoint> endpointList = registry.find(protoDubboReq.getInterfaceName());
+                proxyLoadBalance.init(endpointList);
+                endpoint = proxyLoadBalance.select();
+            }
             RequestChannel clientChannel = clientChannelMap.get(endpoint);
             clientChannel.sendAsyncRequest(protoDubboReq, new RequestChannel.Listener() {
                 @Override

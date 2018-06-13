@@ -2,6 +2,7 @@ package proxy.core.connect.channel;
 
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.ReferenceCountUtil;
 import io.netty.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +105,10 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
             }
         } catch (Exception t) {
             onError(t);
+        } finally {
+            if (msg != null) {
+                ReferenceCountUtil.release(msg);
+            }
         }
     }
 

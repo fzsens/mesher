@@ -33,42 +33,45 @@ public class SrvHandler extends SimpleChannelInboundHandler<MesherProtoDubbo.Req
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, MesherProtoDubbo.Request request) throws Exception {
-            DubboRpcInvocation invocation = new DubboRpcInvocation();
-            invocation.setMethodName(request.getMethod());
-            invocation.setAttachment("path", request.getInterfaceName());
-            invocation.setParameterTypes(request.getParameterTypesString());
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
-            JsonUtils.writeObject(request.getParameter(), writer);
-            invocation.setArguments(out.toByteArray());
-            DubboRpcRequest dubboReq = new DubboRpcRequest();
-            dubboReq.setVersion("2.0.0");
-            dubboReq.setTwoWay(true);
-            dubboReq.setData(invocation);
-            channel.sendAsyncRequest(dubboReq, new RequestChannel.Listener() {
-                @Override
-                public void onRequestSent() {
-                    log.debug("sent");
+        DubboRpcInvocation invocation = new DubboRpcInvocation();
+        invocation.setMethodName(request.getMethod());
+        invocation.setAttachment("path", request.getInterfaceName());
+        invocation.setParameterTypes(request.getParameterTypesString());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
+        JsonUtils.writeObject(request.getParameter(), writer);
+        invocation.setArguments(out.toByteArray());
+        DubboRpcRequest dubboReq = new DubboRpcRequest();
+        dubboReq.setVersion("2.0.0");
+        dubboReq.setTwoWay(true);
+        dubboReq.setId(request.getRequestId());
+        dubboReq.setData(invocation);
+        channel.sendAsyncRequest(dubboReq, new RequestChannel.Listener() {
+            @Override
+            public void onRequestSent() {
+                log.debug("sent");
+            }
+
+            @Override
+            public void onResponseReceived(Object message) {
+                if (message instanceof DubboRpcResponse) {
+                    DubboRpcResponse dubboResponse = (DubboRpcResponse) message;
+                    MesherProtoDubbo.Response protoDubboResp =
+                            MesherProtoDubbo.Response.newBuilder()
+                                    .setRequestId(dubboResponse.getRequestId())
+                                    .setData(ByteString.copyFrom(dubboResponse.getBytes()))
+                                    .build();
+                    ctx.writeAndFlush(protoDubboResp);
+                } else {
+                    System.out.println("message" + message);
                 }
-                @Override
-                public void onResponseReceived(Object message) {
-                    if (message instanceof DubboRpcResponse) {
-                        DubboRpcResponse dubboResponse = (DubboRpcResponse) message;
-                        MesherProtoDubbo.Response protoDubboResp =
-                                MesherProtoDubbo.Response.newBuilder()
-                                        .setRequestId(dubboResponse.getRequestId())
-                                        .setData(ByteString.copyFrom(dubboResponse.getBytes()))
-                                        .build();
-                        ctx.writeAndFlush(protoDubboResp);
-                    } else {
-                        System.out.println("message" + message);
-                    }
-                }
-                @Override
-                public void onError(Exception ex) {
-                    ex.printStackTrace();
-                }
-            });
+            }
+
+            @Override
+            public void onError(Exception ex) {
+                ex.printStackTrace();
+            }
+        });
     }
 
     @Override
