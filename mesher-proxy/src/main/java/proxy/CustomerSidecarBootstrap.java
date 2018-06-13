@@ -14,15 +14,15 @@ import proxy.connect.ProtobufClientConnector;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
 import proxy.core.connect.channel.RequestChannel;
-import proxy.handler.customer.ClientProxyHandler;
+import proxy.handler.customer.CustomerProxyHandler;
 import proxy.registry.ETCDRegistry;
 import proxy.registry.Endpoint;
 import proxy.registry.IRegistry;
+import proxy.registry.IpHelper;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,7 +57,11 @@ public class CustomerSidecarBootstrap implements Closeable {
         allChannels.add(channel);
     }
 
-    void initRequestMap(List<Endpoint> endpoints) throws ExecutionException, InterruptedException {
+    void initRequestMap() throws Exception {
+        String etcdUrl = System.getProperty("etcd.url");
+        IRegistry registry = new ETCDRegistry(etcdUrl);
+        List<Endpoint> endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
+
         for (Endpoint endpoint : endpoints) {
             ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
             ProxyClient client = new ProxyClient(config);
@@ -69,25 +73,21 @@ public class CustomerSidecarBootstrap implements Closeable {
 
     void doStart() throws Exception {
 
-        IRegistry registry = new ETCDRegistry("http://127.0.0.1:2379");
-
-        List<Endpoint> endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
-
-        initRequestMap(endpoints);
-
+        initRequestMap();
         ChannelInitializer<Channel> initializer = new ChannelInitializer<Channel>() {
             protected void initChannel(Channel ch) throws Exception {
-                new ClientProxyHandler(
+                new CustomerProxyHandler(
                         ch.pipeline(), requestChannelMap);
             }
         };
         ServerBootstrap serverBootstrap = new ServerBootstrap()
                 .group(new NioEventLoopGroup(), new NioEventLoopGroup())
-                .option(ChannelOption.SO_KEEPALIVE, true)
-                .option(ChannelOption.TCP_NODELAY, true)
+                .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
-                .channel(NioServerSocketChannel.class)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childOption(ChannelOption.TCP_NODELAY, true)
+                .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .childHandler(initializer);
         ChannelFuture future = serverBootstrap.bind(bindAddress)
                 .addListener(new ChannelFutureListener() {
@@ -108,8 +108,12 @@ public class CustomerSidecarBootstrap implements Closeable {
     }
 
 
+    /**
+     * -Dserver.port=20000 -Detcd.url=http://127.0.0.1:2379
+     */
     public static void main(String[] args) throws Exception {
-        CustomerSidecarBootstrap bootstrap = new CustomerSidecarBootstrap(new InetSocketAddress("127.0.0.1", 20000));
+        int serverPort = Integer.parseInt(System.getProperty("server.port"));
+        CustomerSidecarBootstrap bootstrap = new CustomerSidecarBootstrap(new InetSocketAddress(IpHelper.getHostIp(), serverPort));
         bootstrap.doStart();
     }
 

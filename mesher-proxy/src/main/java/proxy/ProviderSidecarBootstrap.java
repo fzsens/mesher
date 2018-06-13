@@ -16,22 +16,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import protocol.dubbo.DubboClientConnector;
 import protocol.dubbo.protobuf.MesherProtoDubbo;
-import proxy.connect.RegistryableDubboClientConnector;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
 import proxy.core.connect.ClientConnector;
 import proxy.core.connect.channel.ClientChannel;
 import proxy.core.connect.channel.RequestChannel;
-import proxy.handler.provider.SrvHandler;
+import proxy.handler.provider.ProviderProxyHandler;
 import proxy.registry.ETCDRegistry;
+import proxy.registry.IpHelper;
 
+import java.io.Closeable;
 import java.net.InetSocketAddress;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Created by fzsens on 6/3/18.
  */
-public class ProviderSidecarBootstrap {
+public class ProviderSidecarBootstrap implements Closeable {
 
     private Logger log = LoggerFactory.getLogger(ProviderSidecarBootstrap.class);
     /**
@@ -40,8 +40,6 @@ public class ProviderSidecarBootstrap {
     private final ChannelGroup allChannels = new DefaultChannelGroup("mesher-server-proxy", GlobalEventExecutor.INSTANCE);
 
     private final InetSocketAddress bindAddress;
-
-    private final ETCDRegistry etcdRegistry = new ETCDRegistry("http://127.0.0.1:2379");
 
     public ProviderSidecarBootstrap(InetSocketAddress bindAddress) {
         this.bindAddress = bindAddress;
@@ -54,26 +52,32 @@ public class ProviderSidecarBootstrap {
      */
     protected void registerChannel(Channel channel) throws Exception {
         allChannels.add(channel);
-        // registry etcd
-        String serivceName = "com.alibaba.dubbo.performance.demo.provider.IHelloService";
-        etcdRegistry.register(serivceName,this.bindAddress.getPort());
+        String etcdUrl= System.getProperty("etcd.url");
+        String serviceName = "com.alibaba.dubbo.performance.demo.provider.IHelloService";
+        String weight = System.getProperty("load.weight");
+        // register to etcd
+        ETCDRegistry etcdRegistry = new ETCDRegistry(etcdUrl);
+        etcdRegistry.register(serviceName, this.bindAddress.getPort(), weight);
     }
 
-    void doStart() throws ExecutionException, InterruptedException {
+    void doStart() throws Exception {
 
-        ClientConfig config = new ClientConfig(new InetSocketAddress("127.0.0.1", 20880));
+        int dubboPort = Integer.parseInt(System.getProperty("dubbo.protocol.port"));
+
+        ClientConfig config = new ClientConfig(new InetSocketAddress(IpHelper.getHostIp(), dubboPort));
         ProxyClient client = new ProxyClient(config);
-        ClientConnector<ClientChannel> defaultConnector = new RegistryableDubboClientConnector(new InetSocketAddress("127.0.0.1", 20880));
+        ClientConnector<ClientChannel> defaultConnector =
+                new DubboClientConnector(new InetSocketAddress(IpHelper.getHostIp(), dubboPort));
         RequestChannel channel = client.connectAsync(defaultConnector).get();
 
-        SrvHandler handler = new SrvHandler(channel);
-
+        ProviderProxyHandler handler = new ProviderProxyHandler(channel);
         ServerBootstrap serverBootstrap = new ServerBootstrap()
                 .group(new NioEventLoopGroup(), new NioEventLoopGroup())
                 .channel(NioServerSocketChannel.class)
                 .option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .childOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT)
                 .childOption(ChannelOption.TCP_NODELAY, true)
+                .childOption(ChannelOption.SO_KEEPALIVE, true)
                 .childHandler(new ChannelInitializer<Channel>() {
                     @Override
                     protected void initChannel(Channel ch) throws Exception {
@@ -103,8 +107,17 @@ public class ProviderSidecarBootstrap {
         log.info("Proxy started at address: " + boundAddress);
     }
 
-    public static void main(String[] args) throws ExecutionException, InterruptedException {
-        ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress("127.0.0.1", 20001));
+    @Override
+    public void close() {
+        this.allChannels.close().awaitUninterruptibly();
+    }
+
+    /**
+     * -Dserver.port=30000 -Detcd.url=http://127.0.0.1:2379 -Ddubbo.protocol.port=20880  -Dload.weight=3
+     */
+    public static void main(String[] args) throws Exception {
+        int serverPort= Integer.parseInt(System.getProperty("server.port"));
+        ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress(IpHelper.getHostIp(), serverPort));
         bootstrap.doStart();
     }
 }

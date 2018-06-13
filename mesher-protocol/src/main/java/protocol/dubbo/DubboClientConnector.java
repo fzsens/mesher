@@ -2,6 +2,8 @@ package protocol.dubbo;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import proxy.core.ClientConfig;
 import proxy.core.connect.AbstractClientConnector;
 import proxy.core.connect.channel.ClientChannel;
@@ -12,6 +14,8 @@ import java.net.SocketAddress;
  * Created by fzsens on 6/10/18.
  */
 public class DubboClientConnector extends AbstractClientConnector<ClientChannel> {
+
+    private Logger log = LoggerFactory.getLogger(DubboClientConnector.class);
 
     public DubboClientConnector(SocketAddress address) {
         super(address);
@@ -32,6 +36,7 @@ public class DubboClientConnector extends AbstractClientConnector<ClientChannel>
                 // init initializer
                 channel.pipeline().addLast(new DubboRpcDecoder());
                 channel.pipeline().addLast(new DubboRpcEncoder());
+                log.info("init dubbo client channel.");
             }
         };
     }

@@ -29,9 +29,9 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
  * Created by fzsens on 2018/5/30.
  */
 @ChannelHandler.Sharable
-public class ClientProxyHandler extends AbstractProxyHandler {
+public class CustomerProxyHandler extends AbstractProxyHandler {
 
-    private Logger log = LoggerFactory.getLogger(ClientProxyHandler.class);
+    private Logger log = LoggerFactory.getLogger(CustomerProxyHandler.class);
 
     private static AtomicLong SEQ_REQ_ID = new AtomicLong(0);
 
@@ -41,7 +41,7 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
     private final Map<Endpoint, RequestChannel> clientChannelMap;
 
-    public ClientProxyHandler(ChannelPipeline pipeline, Map<Endpoint, RequestChannel> clientChannelMap) {
+    public CustomerProxyHandler(ChannelPipeline pipeline, Map<Endpoint, RequestChannel> clientChannelMap) {
         initChannelPipeline(pipeline);
         this.clientChannelMap = clientChannelMap;
     }

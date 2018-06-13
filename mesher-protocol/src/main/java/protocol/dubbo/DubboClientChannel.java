@@ -22,7 +22,7 @@ public class DubboClientChannel extends AbstractClientChannel {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if (msg instanceof DubboRpcResponse) {
-            // TODO 独立成为一个HeartBeat handler
+            // TODO 鐙珛鎴怘eartBeat handler
             DubboRpcResponse response = (DubboRpcResponse) msg;
             if (response.isHeartbeat()) {
                 DubboRpcRequest heartBeat = new DubboRpcRequest();

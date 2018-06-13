@@ -21,13 +21,13 @@ import java.io.PrintWriter;
  * Created by fzsens on 6/3/18.
  */
 @ChannelHandler.Sharable
-public class SrvHandler extends SimpleChannelInboundHandler<MesherProtoDubbo.Request> {
+public class ProviderProxyHandler extends SimpleChannelInboundHandler<MesherProtoDubbo.Request> {
 
     private RequestChannel channel;
 
-    private Logger log = LoggerFactory.getLogger(SrvHandler.class);
+    private Logger log = LoggerFactory.getLogger(ProviderProxyHandler.class);
 
-    public SrvHandler(RequestChannel channel) {
+    public ProviderProxyHandler(RequestChannel channel) {
         this.channel = channel;
     }
 

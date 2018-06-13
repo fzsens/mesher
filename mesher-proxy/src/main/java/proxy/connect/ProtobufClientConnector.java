@@ -16,7 +16,7 @@ import proxy.core.connect.channel.DefaultClientChannel;
 import java.net.SocketAddress;
 
 /**
- * Created by thierry.fu on 2018/6/12.
+ * Created by fzsens on 2018/6/12.
  */
 public class ProtobufClientConnector  extends AbstractClientConnector<ClientChannel> {
 

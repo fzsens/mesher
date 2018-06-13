@@ -59,15 +59,15 @@ public class ETCDRegistry implements IRegistry {
     }
 
     @Override
-    public void register(String serviceName, int port) throws Exception {
-        String strKey = MessageFormat.format("/{0}/{1}/{2}:{3}", rootPath, serviceName, "127.0.0.1", String.valueOf(port));
+    public void register(String serviceName, int port, String weight) throws Exception {
+        String strKey = MessageFormat.format("/{0}/{1}/{2}:{3}",
+                rootPath, serviceName, IpHelper.getHostIp(), String.valueOf(port));
         ByteSequence key = ByteSequence.fromString(strKey);
-        String weight = System.getProperty("lb.weight");
         ByteSequence val;
-        if (weight == null) {
+        if (weight == null || weight.equals("")) {
             weight = "1";
             val = ByteSequence.fromString(weight);
-            log.warn("未设置provider权重，默认设置为1");
+            log.warn("default weight 1");
         } else {
             val = ByteSequence.fromString(weight);
         }
@@ -88,11 +88,9 @@ public class ETCDRegistry implements IRegistry {
             String host = endpointStr.split(":")[0];
             int port = Integer.valueOf(endpointStr.split(":")[1]);
             int weight = Integer.parseInt(kv.getValue().toStringUtf8());
-            Endpoint endpoint = new Endpoint(host,port,weight);
+            Endpoint endpoint = new Endpoint(host, port, weight);
             endpoints.add(endpoint);
         }
-        log.info("endpoints size:{}",endpoints.size());
-        log.info("endpoints contents:{}",endpoints.toString());
         return endpoints;
     }
 }

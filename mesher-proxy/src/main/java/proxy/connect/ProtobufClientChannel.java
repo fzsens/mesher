@@ -5,7 +5,7 @@ import protocol.dubbo.protobuf.MesherProtoDubbo;
 import proxy.core.connect.channel.AbstractClientChannel;
 
 /**
- * Created by thierry.fu on 2018/6/13.
+ * Created by fzsens on 2018/6/13.
  */
 public class ProtobufClientChannel extends AbstractClientChannel {
 

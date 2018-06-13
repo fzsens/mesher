@@ -29,7 +29,7 @@ public abstract class AbstractProxyHandler extends SimpleChannelInboundHandler<F
     /**
      * trigger read event
      *
-     * @param object if this is {@link ClientProxyHandler} object is request from client otherwise
+     * @param object if this is {@link CustomerProxyHandler} object is request from client otherwise
      */
     abstract void doRead(FullHttpRequest object);
 
