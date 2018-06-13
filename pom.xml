@@ -11,7 +11,7 @@
         <module>mesher-proxy</module>
         <module>mesher-srv</module>
         <module>mesher-core</module>
-        <module>mesher-protobuf</module>
+        <module>mesher-protocol</module>
     </modules>
     <packaging>pom</packaging>
 

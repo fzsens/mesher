@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class DubboRpcRequest {
 
-    public static final String HEARTBEAT_EVENT = null;
+    public static final Object HEARTBEAT_EVENT = new Object();
 
     private static AtomicLong atomicLong = new AtomicLong();
     private long id;
@@ -18,7 +18,6 @@ public class DubboRpcRequest {
     private boolean twoWay = true;
     private boolean mEvent = false;
     private Object mData;
-
 
     public DubboRpcRequest() {
         id = atomicLong.getAndIncrement();
@@ -93,7 +92,7 @@ public class DubboRpcRequest {
         }
     }
 
-    public void setEvent(String event) {
+    public void setEvent(Object event) {
         mEvent = true;
         mData = event;
     }

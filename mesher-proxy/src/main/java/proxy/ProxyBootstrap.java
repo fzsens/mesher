@@ -23,7 +23,7 @@ import java.net.InetSocketAddress;
  */
 public class ProxyBootstrap implements Closeable{
 
-    private Logger log = LoggerFactory.getLogger(ProxyBootstrap.class);
+    private final Logger log = LoggerFactory.getLogger(ProxyBootstrap.class);
     /**
      * all channels created
      */

@@ -18,19 +18,19 @@ public class DubboClientChannel extends AbstractClientChannel {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         if(msg instanceof DubboRpcResponse) {
+            // TODO 独立成为一个HeartBeat handler
             DubboRpcResponse response = (DubboRpcResponse) msg;
             if(response.isHeartbeat()) {
                 DubboRpcRequest heartBeat = new DubboRpcRequest();
                 heartBeat.setId(response.getRequestId());
+                heartBeat.setTwoWay(false);
                 heartBeat.setHeartbeat(true);
                 this.sendAsyncRequest(heartBeat, new Listener() {
                     @Override
                     public void onRequestSent() {
 
                         System.out.println("heartbeat sent");
-
                     }
-
                     @Override
                     public void onResponseReceived(Object response) {
                         System.out.println("heartbeat sent" +response);

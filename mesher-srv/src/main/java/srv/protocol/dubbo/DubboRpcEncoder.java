@@ -5,14 +5,11 @@ import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import srv.protocol.dubbo.model.JsonUtils;
-import srv.protocol.dubbo.model.DubboRpcRequest;
 import srv.protocol.dubbo.model.DubboRpcInvocation;
+import srv.protocol.dubbo.model.DubboRpcRequest;
+import srv.protocol.dubbo.model.JsonUtils;
 
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
+import java.io.*;
 
 /**
  *
@@ -34,10 +31,13 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
     protected void encode(ChannelHandlerContext ctx, Object msg, ByteBuf buffer) throws Exception {
         DubboRpcRequest req = (DubboRpcRequest) msg;
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        if(!req.isHeartbeat()) {
+        ByteBuf bodyBuf;
+        if (!req.isHeartbeat()) {
             encodeRequestData(bos, req.getData());
+        } else {
+            encodeHeartBeatData(bos, req.getData());
         }
-        ByteBuf bodyBuf = Unpooled.wrappedBuffer(bos.toByteArray());
+        bodyBuf = Unpooled.wrappedBuffer(bos.toByteArray());
         ByteBuf headerBuf = ctx.alloc().ioBuffer(HEADER_LENGTH);
         headerBuf.writeShort(MAGIC);
         headerBuf.writeByte(getFlag(req));
@@ -72,6 +72,11 @@ public class DubboRpcEncoder extends MessageToByteEncoder {
         JsonUtils.writeObject(inv.getParameterTypes(), writer);
         JsonUtils.writeBytes(inv.getArguments(), writer);
         JsonUtils.writeObject(inv.getAttachments(), writer);
+    }
+
+    public void encodeHeartBeatData(OutputStream out, Object data) throws IOException {
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(out));
+        JsonUtils.writeObject(data, writer);
     }
 
 }
