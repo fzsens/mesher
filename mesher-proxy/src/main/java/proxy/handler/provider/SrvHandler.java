@@ -1,19 +1,17 @@
-package srv.handler;
+package proxy.handler.provider;
 
 import com.google.protobuf.ByteString;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import protocol.dubbo.model.DubboRpcInvocation;
+import protocol.dubbo.model.DubboRpcRequest;
+import protocol.dubbo.model.DubboRpcResponse;
+import protocol.dubbo.model.JsonUtils;
 import protocol.dubbo.protobuf.MesherProtoDubbo;
 import proxy.core.connect.channel.RequestChannel;
-import srv.protocol.dubbo.model.DubboRpcInvocation;
-import srv.protocol.dubbo.model.DubboRpcRequest;
-import srv.protocol.dubbo.model.DubboRpcResponse;
-import srv.protocol.dubbo.model.JsonUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
@@ -35,7 +33,6 @@ public class SrvHandler extends SimpleChannelInboundHandler<MesherProtoDubbo.Req
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, MesherProtoDubbo.Request request) throws Exception {
-
             DubboRpcInvocation invocation = new DubboRpcInvocation();
             invocation.setMethodName(request.getMethod());
             invocation.setAttachment("path", request.getInterfaceName());

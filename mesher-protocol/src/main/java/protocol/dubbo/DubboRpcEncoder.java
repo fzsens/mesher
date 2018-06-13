@@ -1,13 +1,13 @@
-package srv.protocol.dubbo;
+package protocol.dubbo;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.CompositeByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToByteEncoder;
-import srv.protocol.dubbo.model.DubboRpcInvocation;
-import srv.protocol.dubbo.model.DubboRpcRequest;
-import srv.protocol.dubbo.model.JsonUtils;
+import protocol.dubbo.model.DubboRpcInvocation;
+import protocol.dubbo.model.DubboRpcRequest;
+import protocol.dubbo.model.JsonUtils;
 
 import java.io.*;
 

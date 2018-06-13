@@ -9,7 +9,6 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>mesher-proxy</module>
-        <module>mesher-srv</module>
         <module>mesher-core</module>
         <module>mesher-protocol</module>
     </modules>

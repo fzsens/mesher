@@ -1,4 +1,4 @@
-package srv.protocol.dubbo;
+package protocol.dubbo;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;

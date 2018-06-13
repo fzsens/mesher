@@ -1,4 +1,4 @@
-package proxy.handler;
+package proxy.handler.customer;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandler;
@@ -79,7 +79,6 @@ public class ClientProxyHandler extends AbstractProxyHandler {
                 public void onRequestSent() {
                     // statistic
                 }
-
                 @Override
                 public void onResponseReceived(Object msg) {
                     if (msg instanceof MesherProtoDubbo.Response) {
@@ -95,7 +94,7 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
                 @Override
                 public void onError(Exception ex) {
-                    // statistic
+                    // statistic or retry
                 }
             });
         } catch (Exception e) {

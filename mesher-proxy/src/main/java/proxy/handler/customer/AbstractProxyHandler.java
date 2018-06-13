@@ -1,4 +1,4 @@
-package proxy.handler;
+package proxy.handler.customer;
 
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;

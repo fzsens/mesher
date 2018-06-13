@@ -1,4 +1,4 @@
-package srv;
+package proxy;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -14,24 +14,23 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import protocol.dubbo.DubboClientConnector;
 import protocol.dubbo.protobuf.MesherProtoDubbo;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
 import proxy.core.connect.ClientConnector;
 import proxy.core.connect.channel.ClientChannel;
 import proxy.core.connect.channel.RequestChannel;
-import srv.handler.SrvHandler;
-import srv.protocol.dubbo.DubboClientConnector;
+import proxy.handler.provider.SrvHandler;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Created by fzsens on 6/3/18.
  */
-public class SrvBootstrap {
-    private Logger log = LoggerFactory.getLogger(SrvBootstrap.class);
+public class ProviderSidecarBootstrap {
+    private Logger log = LoggerFactory.getLogger(ProviderSidecarBootstrap.class);
     /**
      * all channels created
      */
@@ -39,7 +38,7 @@ public class SrvBootstrap {
 
     private final InetSocketAddress bindAddress;
 
-    public SrvBootstrap(InetSocketAddress bindAddress) {
+    public ProviderSidecarBootstrap(InetSocketAddress bindAddress) {
         this.bindAddress = bindAddress;
     }
 
@@ -97,7 +96,7 @@ public class SrvBootstrap {
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        SrvBootstrap bootstrap = new SrvBootstrap(new InetSocketAddress("127.0.0.1", 20001));
+        ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress("127.0.0.1", 20001));
         bootstrap.doStart();
     }
 }

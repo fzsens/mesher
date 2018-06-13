@@ -1,10 +1,10 @@
-package srv.protocol.dubbo;
+package protocol.dubbo;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import srv.protocol.dubbo.model.Bytes;
-import srv.protocol.dubbo.model.DubboRpcResponse;
+import protocol.dubbo.model.Bytes;
+import protocol.dubbo.model.DubboRpcResponse;
 
 import java.util.Arrays;
 import java.util.List;

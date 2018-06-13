@@ -3,7 +3,6 @@ package proxy;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.*;
-import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -11,7 +10,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import proxy.handler.ClientProxyHandler;
+import proxy.handler.customer.ClientProxyHandler;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -21,9 +20,9 @@ import java.net.InetSocketAddress;
  * launch proxy sidecar
  * Created by fzsens on 2018/5/30.
  */
-public class ProxyBootstrap implements Closeable{
+public class CustomerSidecarBootstrap implements Closeable{
 
-    private final Logger log = LoggerFactory.getLogger(ProxyBootstrap.class);
+    private final Logger log = LoggerFactory.getLogger(CustomerSidecarBootstrap.class);
     /**
      * all channels created
      */
@@ -31,7 +30,7 @@ public class ProxyBootstrap implements Closeable{
 
     private final InetSocketAddress bindAddress;
 
-    public ProxyBootstrap(InetSocketAddress bindAddress) {
+    public CustomerSidecarBootstrap(InetSocketAddress bindAddress) {
         this.bindAddress = bindAddress;
     }
 
@@ -45,6 +44,7 @@ public class ProxyBootstrap implements Closeable{
     }
 
     void doStart() {
+
         ChannelInitializer<Channel> initializer = new ChannelInitializer<Channel>() {
             protected void initChannel(Channel ch) throws Exception {
                 new ClientProxyHandler(
@@ -79,7 +79,7 @@ public class ProxyBootstrap implements Closeable{
 
 
     public static void main(String[] args) {
-        ProxyBootstrap bootstrap = new ProxyBootstrap(new InetSocketAddress("127.0.0.1",20000));
+        CustomerSidecarBootstrap bootstrap = new CustomerSidecarBootstrap(new InetSocketAddress("127.0.0.1",20000));
         bootstrap.doStart();
     }
 

@@ -1,4 +1,4 @@
-package srv.protocol.dubbo.model;
+package protocol.dubbo.model;
 
 
 import java.util.concurrent.atomic.AtomicLong;

@@ -1,10 +1,10 @@
-package srv.protocol.dubbo;
+package protocol.dubbo;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import proxy.core.connect.channel.AbstractClientChannel;
-import srv.protocol.dubbo.model.DubboRpcRequest;
-import srv.protocol.dubbo.model.DubboRpcResponse;
+import protocol.dubbo.model.DubboRpcRequest;
+import protocol.dubbo.model.DubboRpcResponse;
 
 /**
  * Created by fzsens on 6/11/18.

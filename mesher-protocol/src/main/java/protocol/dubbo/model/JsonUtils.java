@@ -1,4 +1,4 @@
-package srv.protocol.dubbo.model;
+package protocol.dubbo.model;
 
 import com.alibaba.fastjson.serializer.JSONSerializer;
 import com.alibaba.fastjson.serializer.SerializeWriter;

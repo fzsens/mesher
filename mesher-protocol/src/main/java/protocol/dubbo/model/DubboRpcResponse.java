@@ -1,4 +1,4 @@
-package srv.protocol.dubbo.model;
+package protocol.dubbo.model;
 
 public class DubboRpcResponse {
     public static final String HEARTBEAT_EVENT = null;
