@@ -10,17 +10,29 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import proxy.connect.ProtobufClientConnector;
+import proxy.core.ClientConfig;
+import proxy.core.ProxyClient;
+import proxy.core.connect.channel.RequestChannel;
 import proxy.handler.customer.ClientProxyHandler;
+import proxy.registry.ETCDRegistry;
+import proxy.registry.Endpoint;
+import proxy.registry.IRegistry;
 
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 /**
  * launch proxy sidecar
  * Created by fzsens on 2018/5/30.
  */
-public class CustomerSidecarBootstrap implements Closeable{
+public class CustomerSidecarBootstrap implements Closeable {
 
     private final Logger log = LoggerFactory.getLogger(CustomerSidecarBootstrap.class);
     /**
@@ -29,6 +41,8 @@ public class CustomerSidecarBootstrap implements Closeable{
     private final ChannelGroup allChannels = new DefaultChannelGroup("mesher-proxy-client", GlobalEventExecutor.INSTANCE);
 
     private final InetSocketAddress bindAddress;
+
+    private Map<Endpoint, RequestChannel> requestChannelMap = new ConcurrentHashMap<>();
 
     public CustomerSidecarBootstrap(InetSocketAddress bindAddress) {
         this.bindAddress = bindAddress;
@@ -43,12 +57,28 @@ public class CustomerSidecarBootstrap implements Closeable{
         allChannels.add(channel);
     }
 
-    void doStart() {
+    void initRequestMap(List<Endpoint> endpoints) throws ExecutionException, InterruptedException {
+        for (Endpoint endpoint : endpoints) {
+            ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
+            ProxyClient client = new ProxyClient(config);
+            RequestChannel clientChannel = client.connectAsync(new ProtobufClientConnector(config.getDefaultSocksProxyAddress())).get();
+            this.requestChannelMap.put(endpoint, clientChannel);
+        }
+
+    }
+
+    void doStart() throws Exception {
+
+        IRegistry registry = new ETCDRegistry("http://127.0.0.1:2379");
+
+        List<Endpoint> endpoints = registry.find("com.alibaba.dubbo.performance.demo.provider.IHelloService");
+
+        initRequestMap(endpoints);
 
         ChannelInitializer<Channel> initializer = new ChannelInitializer<Channel>() {
             protected void initChannel(Channel ch) throws Exception {
                 new ClientProxyHandler(
-                        ch.pipeline());
+                        ch.pipeline(), requestChannelMap);
             }
         };
         ServerBootstrap serverBootstrap = new ServerBootstrap()
@@ -78,8 +108,8 @@ public class CustomerSidecarBootstrap implements Closeable{
     }
 
 
-    public static void main(String[] args) {
-        CustomerSidecarBootstrap bootstrap = new CustomerSidecarBootstrap(new InetSocketAddress("127.0.0.1",20000));
+    public static void main(String[] args) throws Exception {
+        CustomerSidecarBootstrap bootstrap = new CustomerSidecarBootstrap(new InetSocketAddress("127.0.0.1", 20000));
         bootstrap.doStart();
     }
 

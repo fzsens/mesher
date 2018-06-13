@@ -15,10 +15,6 @@ public class Endpoint {
         return weight;
     }
 
-    public void setWeight(int weight) {
-        this.weight = weight;
-    }
-
     public String getHost() {
         return host;
     }

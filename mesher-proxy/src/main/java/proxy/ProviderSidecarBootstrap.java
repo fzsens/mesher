@@ -16,12 +16,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import protocol.dubbo.DubboClientConnector;
 import protocol.dubbo.protobuf.MesherProtoDubbo;
+import proxy.connect.RegistryableDubboClientConnector;
 import proxy.core.ClientConfig;
 import proxy.core.ProxyClient;
 import proxy.core.connect.ClientConnector;
 import proxy.core.connect.channel.ClientChannel;
 import proxy.core.connect.channel.RequestChannel;
 import proxy.handler.provider.SrvHandler;
+import proxy.registry.ETCDRegistry;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +32,7 @@ import java.util.concurrent.ExecutionException;
  * Created by fzsens on 6/3/18.
  */
 public class ProviderSidecarBootstrap {
+
     private Logger log = LoggerFactory.getLogger(ProviderSidecarBootstrap.class);
     /**
      * all channels created
@@ -37,6 +40,8 @@ public class ProviderSidecarBootstrap {
     private final ChannelGroup allChannels = new DefaultChannelGroup("mesher-server-proxy", GlobalEventExecutor.INSTANCE);
 
     private final InetSocketAddress bindAddress;
+
+    private final ETCDRegistry etcdRegistry = new ETCDRegistry("http://127.0.0.1:2379");
 
     public ProviderSidecarBootstrap(InetSocketAddress bindAddress) {
         this.bindAddress = bindAddress;
@@ -47,15 +52,18 @@ public class ProviderSidecarBootstrap {
      *
      * @param channel channel
      */
-    protected void registerChannel(Channel channel) {
+    protected void registerChannel(Channel channel) throws Exception {
         allChannels.add(channel);
+        // registry etcd
+        String serivceName = "com.alibaba.dubbo.performance.demo.provider.IHelloService";
+        etcdRegistry.register(serivceName,this.bindAddress.getPort());
     }
 
     void doStart() throws ExecutionException, InterruptedException {
 
         ClientConfig config = new ClientConfig(new InetSocketAddress("127.0.0.1", 20880));
         ProxyClient client = new ProxyClient(config);
-        ClientConnector<ClientChannel> defaultConnector = new DubboClientConnector(new InetSocketAddress("127.0.0.1", 20880));
+        ClientConnector<ClientChannel> defaultConnector = new RegistryableDubboClientConnector(new InetSocketAddress("127.0.0.1", 20880));
         RequestChannel channel = client.connectAsync(defaultConnector).get();
 
         SrvHandler handler = new SrvHandler(channel);
@@ -96,7 +104,7 @@ public class ProviderSidecarBootstrap {
     }
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress("127.0.0.1", 20001));
+        ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress("127.0.0.1", 21001));
         bootstrap.doStart();
     }
 }

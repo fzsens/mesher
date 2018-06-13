@@ -1,8 +1,11 @@
 package proxy.loadbalance;
 
 import org.junit.Test;
+import proxy.registry.Endpoint;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,20 +16,20 @@ public class ProxyLoadBalanceTests {
 
     @Test
     public void testSelect() {
-        ProxyLoadBalance<String> loadBalance = new ProxyLoadBalance<>();
-        Map<String,Integer> map = new HashMap<>();
-        map.put("a",2);
-        map.put("b",3);
-        map.put("c",5);
+        ProxyLoadBalance loadBalance = new ProxyLoadBalance();
+        List<Endpoint> endpoints = new ArrayList<>();
+        endpoints.add(new Endpoint("a",1,2));
+        endpoints.add(new Endpoint("b",1,3));
+        endpoints.add(new Endpoint("c",1,5));
         int aTimes = 0;
         int bTimes = 0;
         int cTimes = 0;
-        loadBalance.init(map);
+        loadBalance.init(endpoints);
         for(int i = 0 ; i < 1000000;i++){
-            String s = loadBalance.select();
-            if(s.equals("a")) aTimes++;
-            if(s.equals("b")) bTimes++;
-            if(s.equals("c")) cTimes++;
+            Endpoint s = loadBalance.select();
+            if(s.getHost().equals("a")) aTimes++;
+            if(s.getHost().equals("b")) bTimes++;
+            if(s.getHost().equals("c")) cTimes++;
         }
         System.out.println("aTime : " + aTimes );
         System.out.println("bTimes : " + bTimes );

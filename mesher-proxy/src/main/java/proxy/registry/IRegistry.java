@@ -1,9 +1,11 @@
 package proxy.registry;
 
-import java.util.Map;
+import java.util.List;
 
 public interface IRegistry {
 
-    Map<Endpoint,Integer> find(String serviceName);
+    void register(String serviceName, int port) throws Exception;
+
+    List<Endpoint> find(String serviceName) throws Exception;
 
 }

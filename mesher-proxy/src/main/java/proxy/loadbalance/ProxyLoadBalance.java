@@ -1,28 +1,29 @@
 package proxy.loadbalance;
 
+import proxy.registry.Endpoint;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by thierry.fu on 2018/5/31.
  */
-public class ProxyLoadBalance<T> {
+public class ProxyLoadBalance {
 
     AtomicInteger cursor = new AtomicInteger(0);
 
-    List<T> proxyList = new ArrayList<>();
+    List<Endpoint> proxyList = new ArrayList<>();
 
-    public T select() {
+    public Endpoint select() {
         return proxyList.get(cursor.addAndGet(1) % proxyList.size());
     }
 
-    public void init(Map<T, Integer> channelsMap) {
-        Set<T> keySet = channelsMap.keySet();
-        List<T> channels = new ArrayList<>();
-        for (T channel : keySet) {
-            Integer weight = channelsMap.get(channel);
+    public void init(List<Endpoint> endpoints) {
+        List <Endpoint> channels = new ArrayList<>();
+        for (Endpoint endpoint : endpoints) {
+            Integer weight = endpoint.getWeight();
             for (int i = 0; i < weight; i++) {
-                channels.add(channel);
+                channels.add(endpoint);
             }
         }
         Collections.shuffle(channels);

@@ -9,17 +9,14 @@ import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import protocol.dubbo.protobuf.MesherProtoDubbo;
-import proxy.client.ProtobufClientConnector;
 import proxy.codec.RequestParser;
-import proxy.core.ClientConfig;
-import proxy.core.ProxyClient;
 import proxy.core.connect.channel.RequestChannel;
 import proxy.loadbalance.ProxyLoadBalance;
 import proxy.registry.ETCDRegistry;
 import proxy.registry.Endpoint;
 import proxy.registry.IRegistry;
 
-import java.net.InetSocketAddress;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -38,12 +35,15 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
     private static AtomicLong SEQ_REQ_ID = new AtomicLong(0);
 
-    private ProxyLoadBalance<Endpoint> proxyLoadBalance = new ProxyLoadBalance<>();
+    private ProxyLoadBalance proxyLoadBalance = new ProxyLoadBalance();
 
-    private RequestChannel clientChannel;
+    private final IRegistry registry = new ETCDRegistry("http://127.0.0.1:2379");
 
-    public ClientProxyHandler(ChannelPipeline pipeline) {
+    private final Map<Endpoint, RequestChannel> clientChannelMap;
+
+    public ClientProxyHandler(ChannelPipeline pipeline, Map<Endpoint, RequestChannel> clientChannelMap) {
         initChannelPipeline(pipeline);
+        this.clientChannelMap = clientChannelMap;
     }
 
     @Override
@@ -65,20 +65,16 @@ public class ClientProxyHandler extends AbstractProxyHandler {
 
     private void asyncCall(MesherProtoDubbo.Request protoDubboReq) {
         try {
-            if (clientChannel == null) {
-                IRegistry registry = new ETCDRegistry();
-                Map<Endpoint, Integer> endpointMap = registry.find(protoDubboReq.getInterfaceName());
-                proxyLoadBalance.init(endpointMap);
-                Endpoint endpoint = proxyLoadBalance.select();
-                ClientConfig config = new ClientConfig(new InetSocketAddress(endpoint.getHost(), endpoint.getPort()));
-                ProxyClient client = new ProxyClient(config);
-                clientChannel = client.connectAsync(new ProtobufClientConnector(config.getDefaultSocksProxyAddress())).get();
-            }
+            List<Endpoint> endpointList = registry.find(protoDubboReq.getInterfaceName());
+            proxyLoadBalance.init(endpointList);
+            Endpoint endpoint = proxyLoadBalance.select();
+            RequestChannel clientChannel = clientChannelMap.get(endpoint);
             clientChannel.sendAsyncRequest(protoDubboReq, new RequestChannel.Listener() {
                 @Override
                 public void onRequestSent() {
                     // statistic
                 }
+
                 @Override
                 public void onResponseReceived(Object msg) {
                     if (msg instanceof MesherProtoDubbo.Response) {
@@ -95,6 +91,7 @@ public class ClientProxyHandler extends AbstractProxyHandler {
                 @Override
                 public void onError(Exception ex) {
                     // statistic or retry
+                    log.error("send request error {}" ,ex);
                 }
             });
         } catch (Exception e) {

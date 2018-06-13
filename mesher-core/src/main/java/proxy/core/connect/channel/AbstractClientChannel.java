@@ -1,6 +1,5 @@
 package proxy.core.connect.channel;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.Timeout;
@@ -35,8 +34,6 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
         return nettyChannel;
     }
 
-    //  protected abstract Object extractResponse(Object message) throws Exception;
-
     protected abstract long extractSequenceId(Object message) throws Exception;
 
     public void close() {
@@ -52,7 +49,6 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
     public Exception getError() {
         return channelError;
     }
-
 
     @Override
     public void executeInIoThread(Runnable runnable) {
@@ -100,7 +96,6 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         try {
-            // Object response = extractResponse(msg);
             if (msg != null) {
                 long sequenceId = extractSequenceId(msg);
                 onResponseReceived(sequenceId, msg);
@@ -115,7 +110,7 @@ public abstract class AbstractClientChannel extends ChannelDuplexHandler impleme
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         if (!requestMap.isEmpty()) {
-            onError(new Exception("Client was disconnected by server"));
+            onError(new Exception("Client was disconnected by server, still some request no responsed"));
         }
     }
 

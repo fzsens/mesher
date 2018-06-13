@@ -2,25 +2,29 @@ package protocol.dubbo;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import proxy.core.connect.channel.AbstractClientChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import protocol.dubbo.model.DubboRpcRequest;
 import protocol.dubbo.model.DubboRpcResponse;
+import proxy.core.connect.channel.AbstractClientChannel;
 
 /**
  * Created by fzsens on 6/11/18.
  */
 public class DubboClientChannel extends AbstractClientChannel {
 
-    protected DubboClientChannel(Channel nettyChannel) {
+    protected Logger log = LoggerFactory.getLogger(DubboClientChannel.class);
+
+    public DubboClientChannel(Channel nettyChannel) {
         super(nettyChannel);
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if(msg instanceof DubboRpcResponse) {
+        if (msg instanceof DubboRpcResponse) {
             // TODO 独立成为一个HeartBeat handler
             DubboRpcResponse response = (DubboRpcResponse) msg;
-            if(response.isHeartbeat()) {
+            if (response.isHeartbeat()) {
                 DubboRpcRequest heartBeat = new DubboRpcRequest();
                 heartBeat.setId(response.getRequestId());
                 heartBeat.setTwoWay(false);
@@ -28,17 +32,17 @@ public class DubboClientChannel extends AbstractClientChannel {
                 this.sendAsyncRequest(heartBeat, new Listener() {
                     @Override
                     public void onRequestSent() {
-
-                        System.out.println("heartbeat sent");
+                        log.debug("heartbeat sent .");
                     }
+
                     @Override
                     public void onResponseReceived(Object response) {
-                        System.out.println("heartbeat sent" +response);
+                        log.debug("heartbeat respond " + response);
                     }
 
                     @Override
                     public void onError(Exception ex) {
-                        ex.printStackTrace();
+                        log.warn("heartbeat unexpected exception {} ", ex);
                     }
                 });
                 return;
@@ -49,10 +53,10 @@ public class DubboClientChannel extends AbstractClientChannel {
 
     @Override
     protected long extractSequenceId(Object message) throws Exception {
-        if(message instanceof DubboRpcRequest) {
-            return ((DubboRpcRequest)message).getId();
-        } else if(message instanceof DubboRpcResponse) {
-            return ((DubboRpcResponse)message).getRequestId();
+        if (message instanceof DubboRpcRequest) {
+            return ((DubboRpcRequest) message).getId();
+        } else if (message instanceof DubboRpcResponse) {
+            return ((DubboRpcResponse) message).getRequestId();
         }
         return 0;
     }
