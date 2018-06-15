@@ -37,7 +37,9 @@ public class CustomerProxyHandler extends AbstractProxyHandler {
 
     private ProxyLoadBalance proxyLoadBalance = new ProxyLoadBalance();
 
-    private final IRegistry registry = new ETCDRegistry("http://127.0.0.1:2379");
+    private String etcdUrl = System.getProperty("etcd.url");
+
+    private final IRegistry registry = new ETCDRegistry(etcdUrl);
 
     private final Map<Endpoint, RequestChannel> clientChannelMap;
 
