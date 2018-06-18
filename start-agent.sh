@@ -1,5 +1,5 @@
 #!/bin/bash
-ETCD_HOST=172.17.0.1
+ETCD_HOST=etcd
 ETCD_PORT=2379
 ETCD_URL=http://$ETCD_HOST:$ETCD_PORT
 
