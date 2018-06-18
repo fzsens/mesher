@@ -27,6 +27,7 @@ import proxy.registry.IpHelper;
 
 import java.io.Closeable;
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by fzsens on 6/3/18.
@@ -52,7 +53,7 @@ public class ProviderSidecarBootstrap implements Closeable {
      */
     protected void registerChannel(Channel channel) throws Exception {
         allChannels.add(channel);
-        String etcdUrl= System.getProperty("etcd.url");
+        String etcdUrl = System.getProperty("etcd.url");
         String serviceName = "com.alibaba.dubbo.performance.demo.provider.IHelloService";
         String weight = System.getProperty("load.weight");
         // register to etcd
@@ -64,11 +65,24 @@ public class ProviderSidecarBootstrap implements Closeable {
 
         int dubboPort = Integer.parseInt(System.getProperty("dubbo.protocol.port"));
 
-        ClientConfig config = new ClientConfig(new InetSocketAddress(IpHelper.getHostIp(), dubboPort));
-        ProxyClient client = new ProxyClient(config);
-        ClientConnector<ClientChannel> defaultConnector =
-                new DubboClientConnector(new InetSocketAddress(IpHelper.getHostIp(), dubboPort));
-        RequestChannel channel = client.connectAsync(defaultConnector).get();
+        RequestChannel channel = null;
+        int failTime = 0;
+        boolean retry = true;
+        do {
+            try {
+                ClientConfig config = new ClientConfig(new InetSocketAddress(IpHelper.getHostIp(), dubboPort));
+                ProxyClient client = new ProxyClient(config);
+                ClientConnector<ClientChannel> defaultConnector =
+                        new DubboClientConnector(new InetSocketAddress(IpHelper.getHostIp(), dubboPort));
+                channel = client.connectAsync(defaultConnector).get();
+                retry = false;
+            } catch (Exception e) {
+                retry = true;
+                log.error("connect dubbo server failed. {} wait 5 s", e);
+                TimeUnit.SECONDS.sleep(5);
+                failTime++;
+            }
+        } while (failTime > 5 && retry);
 
         ProviderProxyHandler handler = new ProviderProxyHandler(channel);
         ServerBootstrap serverBootstrap = new ServerBootstrap()
@@ -116,7 +130,7 @@ public class ProviderSidecarBootstrap implements Closeable {
      * -Dserver.port=30000 -Detcd.url=http://127.0.0.1:2379 -Ddubbo.protocol.port=20880  -Dload.weight=3
      */
     public static void main(String[] args) throws Exception {
-        int serverPort= Integer.parseInt(System.getProperty("server.port"));
+        int serverPort = Integer.parseInt(System.getProperty("server.port"));
         ProviderSidecarBootstrap bootstrap = new ProviderSidecarBootstrap(new InetSocketAddress(IpHelper.getHostIp(), serverPort));
         bootstrap.doStart();
     }
